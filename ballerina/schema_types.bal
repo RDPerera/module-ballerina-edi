@@ -22,7 +22,7 @@
 #
 # + delimiters - Delimiters used to separate EDI segments, fields, components, etc.  
 #
-# + ignoreSegments - List of segment schemas to be ignored when matching a EDI text. 
+# + ignoreSegments - List of segment schemas to be ignored when matching an EDI text. 
 # For example, if it is necessary to process X12 transaction sets only, without ISA as GS segments,
 # and if the schema contains ISA and GS segments as well, ISA and GS can be provided as ignoreSegments.
 #

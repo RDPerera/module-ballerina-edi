@@ -73,7 +73,7 @@ isolated function writeSegment(map<json> seg, EdiSegSchema segMap, EdiContext co
             }
             segLine += fd + repeatingText;
         } else {
-            var fdata = seg.get(fieldSchema.tag);
+            json fdata = seg.get(fieldSchema.tag);
             if fieldSchema.length is Range {
                 Range fieldLength = <Range>fieldSchema.length;
                 if fieldLength.min > fdata.toString().length() {

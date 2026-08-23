@@ -219,7 +219,7 @@ isolated function mergeTransactionBodies(json base, json addition) returns json|
     return result;
 }
 
-# Writes the given JSON varibale into a EDI text according to the provided schema.
+# Writes the given JSON variable into an EDI text according to the provided schema.
 #
 # + msg - JSON value to be written into EDI
 # + schema - Schema of the EDI text
