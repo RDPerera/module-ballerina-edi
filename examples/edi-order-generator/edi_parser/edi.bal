@@ -84,7 +84,7 @@ public isolated function interchangeFromEdiString(string ediText) returns ORDERS
     edi:EdiSchema ediSchema = check edi:getSchema(schemaJson);
     edi:EdiInterchange raw = check edi:interchangeFromEdiString(ediText, ediSchema);
     ORDERSTransaction[] txns = [];
-        foreach var t in raw.transactions ?: [] {
+        foreach edi:EdiTransaction t in raw.transactions ?: [] {
             ORDERS|error body = convertORDERSBody(t.body);
             ORDERSTransactionHeader th = check t.transactionHeader.cloneWithType();
             ORDERSTransactionTrailer tt = check t.transactionTrailer.cloneWithType();
@@ -106,7 +106,7 @@ public isolated function interchangeToEdiString(ORDERSInterchange msg) returns s
     edi:EdiInterchange raw;
     {
         edi:EdiTransaction[] rawTxns = [];
-        foreach var t in msg.transactions {
+        foreach ORDERSTransaction t in msg.transactions {
             json|error body = unwrapORDERSBody(t.body);
             rawTxns.push({
                 transactionHeader: t.transactionHeader.toJson(),
