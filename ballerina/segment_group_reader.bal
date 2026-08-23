@@ -238,7 +238,7 @@ isolated function placeEDISegment(EdiSegment segment, EdiSegSchema segSchema, Se
         sgContext.schemaIndex += 1;
         sgContext.segmentGroup[segSchema.tag] = segment;
     } else {
-        // Current mapping points to a repeatable segment. So we are using a EDISegment[] array to hold segments.
+        // Current mapping points to a repeatable segment. So we are using an EDISegment[] array to hold segments.
         // Also we can't increment the mapping index here as next segment can also match with the current mapping
         // as the segment is repeatable.
         var segments = sgContext.segmentGroup[segSchema.tag];

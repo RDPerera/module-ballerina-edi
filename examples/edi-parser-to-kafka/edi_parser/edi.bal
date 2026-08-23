@@ -93,7 +93,7 @@ public isolated function interchangeFromEdiString(string ediText) returns ORDERS
         return {interchangeHeader: ih, transactions: txns, interchangeTrailer: it};
 }
 
-# Serialize a ORDERSInterchange into EDI text; the inverse of interchangeFromEdiString.
+# Serialize the ORDERSInterchange into EDI text; the inverse of interchangeFromEdiString.
 # A transaction whose body is an error is refused — filter or replace it before calling.
 #
 # + msg - The interchange to serialize
@@ -1601,7 +1601,7 @@ public type ORDERSTransactionTrailer record {|
 
 
 
-# A single transaction within a ORDERS interchange.
+# A single transaction within the ORDERS interchange.
 #
 # + transactionHeader - Transaction header segment
 # + body - Parsed ORDERS body, or the parse error when the body is malformed
@@ -1623,7 +1623,7 @@ public type ORDERSInterchange record {|
     ORDERSInterchangeTrailer interchangeTrailer;
 |};
 
-# Envelope headers of a ORDERS interchange.
+# Envelope headers of the ORDERS interchange.
 #
 # + interchange - Interchange header
 # + 'transaction - Transaction header
