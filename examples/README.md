@@ -24,7 +24,7 @@ parsing, and conformant serialization.
    `ballerinax/edifact.d03a.supplychain` package.
 
 5. [Build a Custom EDI Schema and Parser](custom-edi-schema) — Start from a standard EDIFACT message,
-   customise the schema for a trading partner's deviations, and generate a typed Ballerina parser with
+   adapt the schema to a trading partner's deviations, and generate a typed Ballerina parser with
    `edi-tools`. The other examples reuse a module produced this way.
 
 ## Prerequisites

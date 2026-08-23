@@ -139,7 +139,7 @@ functions are available for advanced use. The table below is a cursory overview;
 | `interchangeToEdiString` | Serialize a full interchange back to EDI text (recomputes envelope counts). |
 | `getSchema` | Load and validate a JSON EDI schema into an `EdiSchema`. |
 
-## Customizing the generated schema
+## Adapting the schema to a trading partner
 
 `edi-tools` emits the schema as a JSON file before generating code. Trading partners routinely use
 variations of a standard format, so you can edit this schema to match a partner-specific layout —
