@@ -682,7 +682,7 @@ function testInterchangeFromEdiStringGarbageInputFailsFast() returns error? {
 }
 
 // =============================================================================
-// fromEdiString backward-compatibility and envelope-skip behaviour
+// fromEdiString backward-compatibility and envelope-skip behavior
 // =============================================================================
 
 @test:Config {}

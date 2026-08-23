@@ -1,4 +1,4 @@
-# Build a Custom EDI Schema and Parser
+# Adapt an EDI Schema to a Trading Partner
 
 This example shows how to start from a standard EDIFACT message, adapt it to a trading
 partner's deviations, and generate a typed Ballerina parser with `edi-tools`. The
@@ -71,11 +71,11 @@ public type Message_information_GType record {|
 ## Run the example
 
 This example is a Ballerina **workspace**: the generated `edi_parser` package plus the
-`custom_edi_schema` program that parses `resources/sample.edi` (it carries the partner extension in
+`adapt_edi_schema` program that parses `resources/sample.edi` (it carries the partner extension in
 its UNH segment, `...:UN:EXT1`). Run from the program package:
 
 ```bash
-cd custom_edi_schema
+cd adapt_edi_schema
 bal run
 ```
 
@@ -83,7 +83,7 @@ Expected output — the custom `new_field` is parsed alongside the standard fiel
 
 ```text
 Standard message type: ORDERS D03A UN
-Partner extension (custom new_field): EXT1
+Partner extension (new_field): EXT1
 Order id: PO77001
 Line items: 2
 ```

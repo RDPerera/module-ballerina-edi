@@ -23,7 +23,7 @@ parsing, and conformant serialization.
    `interchangeToEdiString`. Generates nothing: both message types are imported from the prebuilt
    `ballerinax/edifact.d03a.supplychain` package.
 
-5. [Build a Custom EDI Schema and Parser](custom-edi-schema) — Start from a standard EDIFACT message,
+5. [Adapt an EDI Schema to a Trading Partner](adapt-edi-schema) — Start from a standard EDIFACT message,
    adapt the schema to a trading partner's deviations, and generate a typed Ballerina parser with
    `edi-tools`. The other examples reuse a module produced this way.
 

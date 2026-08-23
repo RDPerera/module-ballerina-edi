@@ -38,7 +38,7 @@
 # + segments - Array of segment and segment group schemas
 # + segmentDefinitions - Map of segment definitions indexed by the segment code
 # + envelope - Hierarchical envelope schema (interchange / group / transaction) enabling
-# the envelope-aware APIs; when nil (older schemas), behaviour is unchanged
+# the envelope-aware APIs; when nil (older schemas), behavior is unchanged
 public type EdiSchema record {|
     string name;
     string tag = "Root_mapping";

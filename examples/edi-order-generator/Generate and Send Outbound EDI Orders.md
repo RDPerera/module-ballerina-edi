@@ -26,7 +26,7 @@ This example is a Ballerina **workspace** with two packages:
 
 - `edi_parser` — the typed `ORDERS` module (records plus `interchangeToEdiString`), generated from an
   `ORDERS` EDI schema and exposed at the package root. See
-  [Build a Custom EDI Schema and Parser](../custom-edi-schema) for how it is produced.
+  [Adapt an EDI Schema to a Trading Partner](../adapt-edi-schema) for how it is produced.
 - `edi_order_generator` — the program that queries the database, builds the interchange, and delivers
   the EDI.
 

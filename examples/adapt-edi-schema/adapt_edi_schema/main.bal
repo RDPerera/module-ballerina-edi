@@ -28,7 +28,7 @@ public function main() returns error? {
 
     io:println("Standard message type: ", messageInfo?.name, " D", messageInfo?.version, " ", messageInfo?.status);
     // `new_field` is the partner-specific extension added to the generated schema by hand.
-    io:println("Partner extension (custom new_field): ", messageInfo?.new_field);
+    io:println("Partner extension (new_field): ", messageInfo?.new_field);
 
     edi_parser:ORDERS|error body = interchange.transactions[0].body;
     if body is error {
