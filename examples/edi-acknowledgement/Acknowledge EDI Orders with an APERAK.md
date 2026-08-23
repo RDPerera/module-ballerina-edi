@@ -33,7 +33,7 @@ Nothing is generated here. Both message types are imported from the prebuilt
 [`ballerinax/edifact.d03a.supplychain`](https://central.ballerina.io/ballerinax/edifact.d03a.supplychain)
 package, whose submodules expose the same envelope-aware API over typed records that `bal edi codegen`
 would have produced from the D03A schemas. Generate your own module when a trading partner deviates
-from the published specification — see [Build a Custom EDI Schema and Parser](../custom-edi-schema).
+from the published specification — see [Adapt an EDI Schema to a Trading Partner](../adapt-edi-schema).
 
 ## Project layout
 

@@ -93,10 +93,10 @@ public isolated function interchangeFromEdiString(string ediText) returns ORDERS
         return {interchangeHeader: ih, transactions: txns, interchangeTrailer: it};
 }
 
-# Serialise a ORDERSInterchange into EDI text; the inverse of interchangeFromEdiString.
+# Serialize a ORDERSInterchange into EDI text; the inverse of interchangeFromEdiString.
 # A transaction whose body is an error is refused — filter or replace it before calling.
 #
-# + msg - The interchange to serialise
+# + msg - The interchange to serialize
 # + return - EDI text, or error
 public isolated function interchangeToEdiString(ORDERSInterchange msg) returns string|error {
     edi:EdiSchema ediSchema = check edi:getSchema(schemaJson);

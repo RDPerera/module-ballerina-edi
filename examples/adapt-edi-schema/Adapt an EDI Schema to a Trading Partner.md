@@ -1,6 +1,6 @@
-# Build a Custom EDI Schema and Parser
+# Adapt an EDI Schema to a Trading Partner
 
-This example shows how to start from a standard EDIFACT message, customise it for a trading
+This example shows how to start from a standard EDIFACT message, adapt it to a trading
 partner's deviations, and generate a typed Ballerina parser with `edi-tools`. The
 [parser to Kafka](../edi-parser-to-kafka) and [order generator](../edi-order-generator) examples
 reuse a typed module produced this way.
@@ -11,7 +11,7 @@ Real trading partners rarely use a published EDI specification verbatim — they
 tighten field lengths, or restrict code lists. The workflow is:
 
 1. **Generate the base schema** from the standard message version and type.
-2. **Customise the schema JSON** for the partner's deviations.
+2. **Adapt the schema JSON** to the partner's deviations.
 3. **Generate the typed module** (records + envelope-aware parser/serializer functions).
 
 The result is a Ballerina module whose `interchangeFromEdiString`, `headersFromEdiString`,
@@ -31,7 +31,7 @@ downloads](https://unece.org/trade/uncefact/unedifact/download) and pass it with
 bal edi convertEdifactSchema -v d03a -t ORDERS -i d03a.zip -o resources
 ```
 
-## Step 2 — Customise the schema
+## Step 2 — Adapt the schema
 
 Edit `resources/ORDERS.json` for partner-specific deviations. In this example the partner appends a
 fifth sub-element to the UNH message identifier, so a `new_field` component was added to the `UNH`
@@ -46,8 +46,8 @@ segment definition:
 }
 ```
 
-Other common customisations: change a field `length`, mark a segment `required`, add code values, or
-add/remove segments. See the [Schema Specification](https://github.com/ballerina-platform/module-ballerina-edi/blob/main/docs/specs/SchemaSpecification.md)
+Other common adaptations: change a field `length`, mark a segment `required`, add code values, or
+add/remove segments. See the [schema definition](https://github.com/ballerina-platform/module-ballerina-edi/blob/main/docs/spec/spec.md#7-schema-definition)
 for the full grammar.
 
 ## Step 3 — Generate the typed module
@@ -56,7 +56,7 @@ for the full grammar.
 bal edi codegen -i resources/ORDERS.json -o edi_parser/edi.bal
 ```
 
-The customised element appears on the generated record, so `messageInfo.new_field` is fully typed:
+The adapted element appears on the generated record, so `messageInfo.new_field` is fully typed:
 
 ```ballerina
 public type Message_information_GType record {|
@@ -71,11 +71,11 @@ public type Message_information_GType record {|
 ## Run the example
 
 This example is a Ballerina **workspace**: the generated `edi_parser` package plus the
-`custom_edi_schema` program that parses `resources/sample.edi` (it carries the partner extension in
+`adapt_edi_schema` program that parses `resources/sample.edi` (it carries the partner extension in
 its UNH segment, `...:UN:EXT1`). Run from the program package:
 
 ```bash
-cd custom_edi_schema
+cd adapt_edi_schema
 bal run
 ```
 
@@ -83,7 +83,7 @@ Expected output — the custom `new_field` is parsed alongside the standard fiel
 
 ```text
 Standard message type: ORDERS D03A UN
-Partner extension (custom new_field): EXT1
+Partner extension (new_field): EXT1
 Order id: PO77001
 Line items: 2
 ```

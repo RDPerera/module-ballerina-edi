@@ -19,7 +19,7 @@ The Ballerina `edi` module provides schema-driven, envelope-aware conversion bet
 - **Full envelope hierarchy parsing** into typed `EdiInterchange` / `EdiFunctionalGroup` / `EdiTransaction` records, with a fail-safe per-transaction body — process what you can and quarantine what you can't.
 - **Transaction body parsing** into JSON or typed Ballerina records (X12, EDIFACT, or any custom format).
 - **Serialization** of JSON / records back to EDI text for outbound flows.
-- **Schema-driven** parsing from a JSON schema — either [generated from an X12 / EDIFACT spec](https://github.com/ballerina-platform/edi-tools) or [defined manually](https://github.com/ballerina-platform/module-ballerina-edi/blob/main/docs/specs/SchemaSpecification.md) for partner-specific formats.
+- **Schema-driven** parsing from a JSON schema — either [generated from an X12 / EDIFACT spec](https://github.com/ballerina-platform/edi-tools) or [defined manually](https://github.com/ballerina-platform/module-ballerina-edi/blob/main/docs/spec/spec.md#7-schema-definition) for partner-specific formats.
 
 ## Setup
 
@@ -62,11 +62,12 @@ public function main() returns error? {
     string ediText = check io:fileReadString("resources/order.edi");
     ORDERSInterchange interchange = check interchangeFromEdiString(ediText);
     foreach var txn in interchange.transactions {
-        if txn.body is error {
-            io:println("Quarantined: ", txn.body.message());
+        ORDERS|error body = txn.body;
+        if body is error {
+            io:println("Quarantined: ", body.message());
             continue;
         }
-        io:println(txn.body);
+        io:println(body);
     }
 }
 ```
@@ -125,8 +126,8 @@ bal edi codegen -i resources/850-schema.json -o po.bal
 
 Most users call the generated functions rather than this module directly, but the module's public
 functions are available for advanced use. The table below is a cursory overview; see the
-[Module Specification](https://github.com/ballerina-platform/module-ballerina-edi/blob/main/docs/specs/ModuleSpecification.md)
-for full signatures, parameters, error types, and envelope semantics.
+[specification](https://github.com/ballerina-platform/module-ballerina-edi/blob/main/docs/spec/spec.md) for error types and envelope processing semantics, and the
+[API docs](https://central.ballerina.io/ballerina/edi/latest) for signatures.
 
 | Function | Purpose |
 |----------|---------|
@@ -138,7 +139,7 @@ for full signatures, parameters, error types, and envelope semantics.
 | `interchangeToEdiString` | Serialize a full interchange back to EDI text (recomputes envelope counts). |
 | `getSchema` | Load and validate a JSON EDI schema into an `EdiSchema`. |
 
-## Customizing the generated schema
+## Adapting the schema to a trading partner
 
 `edi-tools` emits the schema as a JSON file before generating code. Trading partners routinely use
 variations of a standard format, so you can edit this schema to match a partner-specific layout —
@@ -159,15 +160,14 @@ parser. A minimal schema looks like:
 }
 ```
 
-The [Schema Specification](https://github.com/ballerina-platform/module-ballerina-edi/blob/main/docs/specs/SchemaSpecification.md)
-documents the full grammar — delimiters, segments and segment groups, fields / components /
+The [schema definition](https://github.com/ballerina-platform/module-ballerina-edi/blob/main/docs/spec/spec.md#7-schema-definition) section of the specification documents the full grammar — delimiters, segments and segment groups, fields / components /
 sub-components, the `envelope` declaration, and the additional configuration options.
 
 ## Examples
 
 The [`examples`](https://github.com/ballerina-platform/module-ballerina-edi/tree/main/examples) directory contains runnable end-to-end samples:
 
-- [Custom EDI schema](https://github.com/ballerina-platform/module-ballerina-edi/tree/main/examples/custom-edi-schema) — define a custom EDI schema and generate a typed parser from it (the codegen workflow foundation).
+- [Adapt an EDI schema](https://github.com/ballerina-platform/module-ballerina-edi/tree/main/examples/adapt-edi-schema) — adapt a standard EDIFACT schema to a trading partner's deviations and generate a typed parser from it (the codegen workflow foundation).
 - [Vendor router](https://github.com/ballerina-platform/module-ballerina-edi/tree/main/examples/edi-vendor-router) — schema-free header inspection to route inbound messages by trading partner.
 - [Parser to Kafka](https://github.com/ballerina-platform/module-ballerina-edi/tree/main/examples/edi-parser-to-kafka) — parse an interchange with fail-safe per-transaction bodies, forward good transactions to Kafka, and quarantine the rest.
 - [Order generator](https://github.com/ballerina-platform/module-ballerina-edi/tree/main/examples/edi-order-generator) — build and serialize a full interchange with `interchangeToEdiString`, including a parse/serialize round-trip.
@@ -175,8 +175,7 @@ The [`examples`](https://github.com/ballerina-platform/module-ballerina-edi/tree
 
 ## Documentation
 
-- [Module Specification](https://github.com/ballerina-platform/module-ballerina-edi/blob/main/docs/specs/ModuleSpecification.md) — the full API reference and envelope processing semantics.
-- [Schema Specification](https://github.com/ballerina-platform/module-ballerina-edi/blob/main/docs/specs/SchemaSpecification.md) — the JSON grammar for EDI schemas.
+- [Specification](https://github.com/ballerina-platform/module-ballerina-edi/blob/main/docs/spec/spec.md) — envelope processing semantics, error types, and the JSON grammar for EDI schemas.
 - [edi-tools](https://github.com/ballerina-platform/edi-tools) — converting X12 / EDIFACT specs into schemas (`convertX12Schema` / `convertEdifactSchema`), generating typed parsers (`codegen`), and packaging schema families as libraries (`libgen`).
 
 ## Issues and projects

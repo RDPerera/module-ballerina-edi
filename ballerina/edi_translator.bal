@@ -242,7 +242,7 @@ public isolated function toEdiString(json msg, EdiSchema schema) returns string|
         return "";
     }
     // A single join (suffix after every entry) avoids the quadratic cost of
-    // repeated `+=` concatenation when serialising large messages.
+    // repeated `+=` concatenation when serializing large messages.
     string suffix = clonedSchema.delimiters.segment == "\n" ? "" : "\n";
     return string:'join(suffix, ...ediText) + suffix;
 }
