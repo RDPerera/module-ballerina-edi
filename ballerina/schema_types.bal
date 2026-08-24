@@ -118,6 +118,8 @@ public type EdiFieldSchema record {|
     EdiDataType dataType = STRING;
     int startIndex = -1;
     Range|int length = -1;
+    string[] values?;
+    boolean discriminator = false;
     EdiComponentSchema[] components = [];
 |};
 
@@ -131,6 +133,8 @@ public type EdiComponentSchema record {|
     boolean required = false;
     boolean truncatable = true;
     EdiDataType dataType = STRING;
+    string[] values?;
+    boolean discriminator = false;
     EdiSubcomponentSchema[] subcomponents = [];
 |};
 
@@ -138,4 +142,6 @@ public type EdiSubcomponentSchema record {|
     string tag;
     boolean required = false;
     EdiDataType dataType = STRING;
+    string[] values?;
+    boolean discriminator = false;
 |};

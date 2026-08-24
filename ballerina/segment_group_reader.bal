@@ -47,7 +47,7 @@ isolated function readSegmentGroup(EdiUnitSchema[] currentUnitSchema, EdiContext
         string[] fields = check splitFields(segmentDesc, ediSchema.delimiters.'field, segSchema);
         if segSchema is EdiSegSchema {
             log:printDebug(string `Trying to match [Segment]: ${context.ediText[context.rawIndex]} with segment mapping ${printSegMap(segSchema)}`);
-            if segSchema.code != fields[0].trim() {
+            if !segmentMatches(segSchema, fields, ediSchema) {
                 check ignoreSchema(segSchema, sgContext, context);
                 continue;
             }
@@ -67,8 +67,8 @@ isolated function readSegmentGroup(EdiUnitSchema[] currentUnitSchema, EdiContext
             if firstSegSchema is EdiSegGroupSchema {
                 return error Error("First item of segment group must be a segment. Found a segment group.\nSegment group: " + printSegGroupMap(segSchema));
             }
-            // Before proceeding with going through the segment group, check whether the first field value matches the criteria of the segment group.
-            boolean firstFieldMatchesResult = firstFieldMatches(segSchema, fields[0].trim());
+            // Before proceeding with going through the segment group, check whether the input segment matches an appropriate segment of the segment group.
+            boolean firstFieldMatchesResult = firstSegmentMatches(segSchema, fields, ediSchema);
             if !firstFieldMatchesResult {
                 check ignoreSchemaGroup(segSchema, sgContext, context);
                 continue;
@@ -112,22 +112,17 @@ isolated function readSegmentGroup(EdiUnitSchema[] currentUnitSchema, EdiContext
     return sgContext.segmentGroup;
 }
 
-# Checks whether any appropriate segment of the given segment group schema matches with the first field of the given segment.
+# Checks whether an appropriate segment of the given segment group schema matches the input segment.
+# Matching considers the segment code and any discriminator value constraints of the candidate segments.
 #
 # + segSchema - Segment group schema
-# + firstField - First field of the given segment
-# + return - Return true if the first field matches with an appropriate segment of the given segment group schema
-isolated function firstFieldMatches(EdiSegGroupSchema segSchema, string firstField) returns boolean {
+# + fields - Fields of the input segment
+# + ediSchema - EDI schema providing the delimiters
+# + return - Return true if the input segment matches an appropriate segment of the given segment group schema
+isolated function firstSegmentMatches(EdiSegGroupSchema segSchema, string[] fields, EdiSchema ediSchema) returns boolean {
     foreach EdiUnitSchema seg in segSchema.segments {
-        if seg is EdiSegSchema {
-            if (seg.minOccurances == 1 && seg.code == firstField) {
-                // if the segment is mandatory, then the first field must match with the segment code.
-                return true;
-            }
-            if (seg.minOccurances == 0 && seg.code == firstField) {
-                // if the segment is optional, and if the first field matches the segment code.
-                return true;
-            }
+        if seg is EdiSegSchema && segmentMatches(seg, fields, ediSchema) {
+            return true;
         }
         if seg is EdiSegGroupSchema {
             // FIXME is this a possible path?

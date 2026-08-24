@@ -194,6 +194,8 @@ Within the `fields` sub-definition, the `length` attribute is used to specify th
 - **`dataType`** *(default `"string"`)* — data type of the field (`string` / `int` / `float` / `composite`).
 - **`startIndex`** *(default `-1`)* — starting index of the field within the segment (fixed-width formats only).
 - **`length`** *(default `-1`)* — fixed length, or a `{"min": N, "max": M}` range.
+- **`values`** *(optional)* — the legal codes of the field (e.g. from a standard code list). Validated when writing EDI; does not affect segment matching on its own. See [4.3](#43-value-constraints-and-qualifier-based-discrimination).
+- **`discriminator`** *(default `false`)* — opts the field's `values` into segment matching, so that the field's value identifies which of several same-code definitions an input segment belongs to. See [4.3](#43-value-constraints-and-qualifier-based-discrimination).
 - **`components`** — array of component definitions when `dataType` is `composite`.
 
 #### 4.1 Type constraints
@@ -244,6 +246,78 @@ The `length` value provides the following constraints:
 ]
 ```
 
+#### 4.3 Value constraints and qualifier-based discrimination
+
+EDI formats reuse the same segment code for definitions with different meanings and rely on a
+qualifier value to identify each one. For example, an X12 834 member loop defines three
+definitions that all use the `REF` code — a subscriber identifier (qualifier `0F`), a member
+policy number (qualifier `1L`), and supplemental identifiers (qualifiers `17`, `23`, `DX`).
+Fields, components, and sub-components can declare such value sets with two attributes:
+
+- **`values`** — the legal codes of the element. On its own, `values` never affects how segments
+  are matched: it is validated when writing EDI (an input value outside the set is an error), so
+  full standard code lists can be attached without changing how existing messages parse.
+- **`discriminator: true`** — opts the element's `values` into segment matching. An input segment
+  is an instance of a definition only when the segment code matches **and** every discriminator
+  element's value is contained in its `values` set.
+
+Matching semantics:
+
+- A **missing or empty** discriminator value never matches — a segment that does not carry its
+  identity cannot claim a discriminated definition.
+- When a segment matches **no** definition at the current schema position, parsing fails with an
+  error naming the segment (an optional discriminated definition is correctly recognized as
+  absent and skipped).
+- When **several** definitions could match, the first definition in schema order wins. The schema
+  loader logs warnings when sibling definitions sharing a segment code have overlapping
+  discriminator value sets, or when one of them has no discriminator.
+- A `discriminator` must declare a non-empty `values` set, must not be placed on a repeating
+  field, and must be placed on the element that holds the value: on a component (not the
+  composite field) when the value is inside a composite, and on a sub-component when the value is
+  inside a component with sub-components. Violations are rejected when the schema is loaded.
+
+**Example** — the X12 834 member-level `REF` definitions:
+
+```json
+{
+    "code": "REF",
+    "tag": "MemberPolicyNumber",
+    "minOccurances": 0,
+    "fields": [
+        {"tag": "code"},
+        {"tag": "qualifier", "required": true, "values": ["1L"], "discriminator": true},
+        {"tag": "identifier", "required": true}
+    ]
+}
+```
+
+With this definition, `REF*17*BARGAINED~` no longer matches `MemberPolicyNumber` (17 is not in
+`{1L}`), so the optional definition is skipped and the segment falls through to the definition
+whose value set contains `17`.
+
+**Example** — an EDIFACT `RFF` qualifier, which lives inside the `C506` composite, is
+discriminated at component level. Combined with segment references, definitions sharing a code
+can be specialized per position:
+
+```json
+"segmentDefinitions": {
+    "RFF_VatNumber": {
+        "code": "RFF",
+        "tag": "VatNumber",
+        "fields": [
+            {"tag": "code"},
+            {"tag": "REFERENCE", "required": true, "components": [
+                {"tag": "qualifier", "required": true, "values": ["VA"], "discriminator": true},
+                {"tag": "number", "required": true}
+            ]}
+        ]
+    }
+},
+"segments": [
+    {"ref": "RFF_VatNumber", "minOccurances": 0}
+]
+```
+
 ### 5. Components
 
 For each component within a field:
@@ -252,6 +326,7 @@ For each component within a field:
 - **`required`** *(default `false`)* — whether the component is required.
 - **`truncatable`** *(default `true`)* — whether trailing sub-components may be omitted.
 - **`dataType`** *(default `"string"`)* — data type of the component.
+- **`values`** *(optional)* / **`discriminator`** *(default `false`)* — value constraints and qualifier-based discrimination, as for fields. See [4.3](#43-value-constraints-and-qualifier-based-discrimination).
 - **`subcomponents`** — array of sub-component definitions.
 
 **Example:**
@@ -278,6 +353,7 @@ For each sub-component within a component:
 - **`tag`** — user-friendly tag for the sub-component.
 - **`required`** *(default `false`)* — whether the sub-component is required.
 - **`dataType`** *(default `"string"`)* — data type of the sub-component.
+- **`values`** *(optional)* / **`discriminator`** *(default `false`)* — value constraints and qualifier-based discrimination, as for fields. See [4.3](#43-value-constraints-and-qualifier-based-discrimination).
 
 **Example:**
 ```json

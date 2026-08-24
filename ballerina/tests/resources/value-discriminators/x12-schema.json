@@ -1,0 +1,56 @@
+{
+  "name": "Loop2000RefDiscriminationTest",
+  "delimiters": {
+    "segment": "~",
+    "field": "*",
+    "component": ":"
+  },
+  "preserveEmptyFields": false,
+  "includeSegmentCode": true,
+  "segments": [
+    {
+      "code": "INS",
+      "tag": "MemberLevelDetail",
+      "minOccurances": 1,
+      "maxOccurances": 1,
+      "fields": [
+        {"tag": "code"},
+        {"tag": "memberIndicator", "required": true},
+        {"tag": "relationship", "required": true}
+      ]
+    },
+    {
+      "code": "REF",
+      "tag": "SubscriberIdentifier",
+      "minOccurances": 1,
+      "maxOccurances": 1,
+      "fields": [
+        {"tag": "code"},
+        {"tag": "qualifier", "required": true, "values": ["0F"], "discriminator": true},
+        {"tag": "identifier", "required": true}
+      ]
+    },
+    {
+      "code": "REF",
+      "tag": "MemberPolicyNumber",
+      "minOccurances": 0,
+      "maxOccurances": 1,
+      "fields": [
+        {"tag": "code"},
+        {"tag": "qualifier", "required": true, "values": ["1L"], "discriminator": true},
+        {"tag": "identifier", "required": true}
+      ]
+    },
+    {
+      "code": "REF",
+      "tag": "MemberSupplementalIdentifier",
+      "minOccurances": 0,
+      "maxOccurances": 13,
+      "fields": [
+        {"tag": "code"},
+        {"tag": "qualifier", "required": true, "values": ["17", "23", "DX"], "discriminator": true},
+        {"tag": "identifier", "required": true}
+      ]
+    }
+  ]
+}

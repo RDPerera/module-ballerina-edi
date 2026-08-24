@@ -7,6 +7,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- [Add `values` and `discriminator` attributes to fields, components, and sub-components, enabling qualifier-based discrimination of segment definitions sharing a segment code (e.g. X12 834 `REF` definitions, EDIFACT `RFF`/`C506`)](https://github.com/wso2/product-integrator/issues/2150)
 
 ### Fixed
 

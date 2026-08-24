@@ -60,9 +60,10 @@ isolated function writeSegment(map<json> seg, EdiSegSchema segMap, EdiContext co
             if fieldSchema.components.length() == 0 {
                 foreach json fdataElement in fdata {
                     if !(fdataElement is SimpleType) {
-                        return error Error(string `Repeatable field value must be a primitive type array. 
+                        return error Error(string `Repeatable field value must be a primitive type array.
                                                     Field: ${fieldSchema.tag}, Segment: ${segMap.tag}, Input value: ${fdata.toString()}`);
                     }
+                    check validateAllowedValue(fdataElement, fieldSchema.values, segMap.tag, fieldSchema.tag);
                     repeatingText += (repeatingText == "" ? "" : rd) + fdataElement.toString();
                 }
             } else {
@@ -89,6 +90,7 @@ isolated function writeSegment(map<json> seg, EdiSegSchema segMap, EdiContext co
                 return error Error(string `Field must contain a primitive value.
                 Field: ${fieldSchema.tag}, Segment: ${segMap.tag}, Input value: ${fdata.toString()}`);
             }
+            check validateAllowedValue(fdata, fieldSchema.values, segMap.tag, fieldSchema.tag);
             segLine += (segLine.length() > 0 && fd != "FL" ? fd : "") + serializeSimpleType(fdata, context.schema, fd == "FL" && fieldSchema.length is int ? <int>fieldSchema.length : -1);
         }
         sIndex += 1;
