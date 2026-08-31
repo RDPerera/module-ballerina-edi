@@ -268,6 +268,12 @@ Matching semantics:
 - When a segment matches **no** definition at the current schema position, parsing fails with an
   error naming the segment (an optional discriminated definition is correctly recognized as
   absent and skipped).
+- A run of **consecutive definitions sharing one segment code, each declaring at least one
+  discriminator**, is matched as an **unordered set**: while input segments carry the run's code,
+  every member that can still accept an occurrence is tried in schema order, so occurrences may
+  arrive in any order and interleave freely (as X12 implementation guides and EDIFACT MIGs allow).
+  The run is left when a segment with a different code arrives or matches no member; on exit,
+  every mandatory member must have at least one occurrence.
 - When **several** definitions could match, the first definition in schema order wins. The schema
   loader logs warnings when sibling definitions sharing a segment code have overlapping
   discriminator value sets, or when one of them has no discriminator.

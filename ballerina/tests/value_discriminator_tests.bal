@@ -201,3 +201,82 @@ function testDiscriminatorOnCompositeFieldIsRejectedAtLoadTime() returns error? 
     test:assertTrue(schema is error,
         "Discriminators on composite fields must be declared on the component holding the value");
 }
+
+@test:Config
+function testAnyOrderSiblingRunSingleOccurrence() returns error? {
+    json schemaJson = check io:fileReadJson("tests/resources/value-discriminators/x12-schema.json");
+    EdiSchema schema = check getSchema(schemaJson);
+    // Discriminated same-code siblings arrive in reverse of schema order.
+    string ediText = "INS*Y*18~\nREF*17*Bargained~\nREF*1L*373~\nREF*0F*110011113~\nREF*DX*1018~";
+    json result = check fromEdiString(ediText, schema);
+
+    test:assertEquals(check result.SubscriberIdentifier.qualifier, "0F");
+    test:assertEquals(check result.MemberPolicyNumber.identifier, "373");
+    json supplemental = check result.MemberSupplementalIdentifier;
+    test:assertTrue(supplemental is json[]);
+    json[] supplementalIdentifiers = <json[]>supplemental;
+    test:assertEquals(supplementalIdentifiers.length(), 2);
+    test:assertEquals(check supplementalIdentifiers[0].qualifier, "17");
+    test:assertEquals(check supplementalIdentifiers[1].qualifier, "DX");
+}
+
+@test:Config
+function testInterleavedRepeatableSiblingRun() returns error? {
+    json schemaJson = {
+        "name": "InterleavedRun",
+        "delimiters": {"segment": "'", "field": "+", "component": ":"},
+        "preserveEmptyFields": false,
+        "segments": [
+            {"code": "ALC", "tag": "Allowance", "minOccurances": 0, "maxOccurances": -1, "fields": [
+                {"tag": "code"}, {"tag": "kind", "values": ["A"], "discriminator": true}, {"tag": "v"}]},
+            {"code": "ALC", "tag": "Charge", "minOccurances": 0, "maxOccurances": -1, "fields": [
+                {"tag": "code"}, {"tag": "kind", "values": ["C"], "discriminator": true}, {"tag": "v"}]}
+        ]
+    };
+    EdiSchema schema = check getSchema(schemaJson);
+    json result = check fromEdiString("ALC+A+1'\nALC+C+3'\nALC+A+2'", schema);
+    json allowance = check result.Allowance;
+    json charge = check result.Charge;
+    test:assertTrue(allowance is json[] && charge is json[]);
+    test:assertEquals((<json[]>allowance).length(), 2, "Interleaved A occurrences must both land in Allowance");
+    test:assertEquals((<json[]>charge).length(), 1);
+    test:assertEquals(check (<json[]>allowance)[1].v, "2");
+}
+
+@test:Config
+function testSiblingRunMandatoryMemberMissing() returns error? {
+    json schemaJson = check io:fileReadJson("tests/resources/value-discriminators/x12-schema.json");
+    EdiSchema schema = check getSchema(schemaJson);
+    // The mandatory SubscriberIdentifier (REF*0F) never arrives.
+    string ediText = "INS*Y*18~\nREF*17*Bargained~\nREF*DX*1018~";
+    json|Error result = fromEdiString(ediText, schema);
+    test:assertTrue(result is Error, "A mandatory run member with no occurrence must be reported");
+}
+
+@test:Config
+function testSiblingRunStillRejectsUnknownQualifier() returns error? {
+    json schemaJson = check io:fileReadJson("tests/resources/value-discriminators/x12-schema.json");
+    EdiSchema schema = check getSchema(schemaJson);
+    string ediText = "INS*Y*18~\nREF*0F*110011113~\nREF*99*SOMETHING~";
+    json|Error result = fromEdiString(ediText, schema);
+    test:assertTrue(result is Error, "A qualifier outside every run member's value set must still be rejected");
+}
+
+@test:Config
+function testSiblingRunRespectsMaxOccurrences() returns error? {
+    json schemaJson = {
+        "name": "RunMaxTest",
+        "delimiters": {"segment": "~", "field": "*", "component": ":"},
+        "preserveEmptyFields": false,
+        "segments": [
+            {"code": "REF", "tag": "First", "minOccurances": 0, "maxOccurances": 1, "fields": [
+                {"tag": "code"}, {"tag": "q", "values": ["A"], "discriminator": true}, {"tag": "v"}]},
+            {"code": "REF", "tag": "Second", "minOccurances": 0, "maxOccurances": 1, "fields": [
+                {"tag": "code"}, {"tag": "q", "values": ["B"], "discriminator": true}, {"tag": "v"}]}
+        ]
+    };
+    EdiSchema schema = check getSchema(schemaJson);
+    // A second REF*A cannot be absorbed once First is full.
+    json|Error result = fromEdiString("REF*A*1~\nREF*A*2~", schema);
+    test:assertTrue(result is Error, "A run member must not exceed its maximum occurrences");
+}

@@ -46,6 +46,15 @@ isolated function readSegmentGroup(EdiUnitSchema[] currentUnitSchema, EdiContext
         }
         string[] fields = check splitFields(segmentDesc, ediSchema.delimiters.'field, segSchema);
         if segSchema is EdiSegSchema {
+            int runEnd = discriminatedSiblingRunEnd(currentUnitSchema, sgContext.schemaIndex);
+            if runEnd > sgContext.schemaIndex {
+                // A run of consecutive same-code sibling definitions that all declare
+                // discriminators is matched as an unordered set: X12 implementation guides
+                // and EDIFACT MIGs allow such segments to arrive in any order (e.g. HIPAA
+                // "any order" sub-loops, EANCOM interleaved ALC+A / ALC+C occurrences).
+                check readDiscriminatedSiblingRun(currentUnitSchema, runEnd, sgContext, context);
+                continue;
+            }
             log:printDebug(string `Trying to match [Segment]: ${context.ediText[context.rawIndex]} with segment mapping ${printSegMap(segSchema)}`);
             if !segmentMatches(segSchema, fields, ediSchema) {
                 check ignoreSchema(segSchema, sgContext, context);
@@ -345,4 +354,131 @@ isolated function qualifierMatchesExistingOccurrence(EdiSegGroupSchema segGroupS
         return storedQualifierStr == currentQualifier;
     }
     return true;
+}
+
+# Returns the index of the last member of the discriminated sibling run starting at the given
+# index: the maximal run of consecutive segment definitions sharing one segment code, where every
+# member declares at least one discriminator. Returns the start index itself when there is no
+# such run of length two or more.
+#
+# + units - Unit schemas of the current segment group
+# + startIndex - Index of the unit the schema cursor is standing on
+# + return - Index of the last run member, or `startIndex` when there is no run
+isolated function discriminatedSiblingRunEnd(EdiUnitSchema[] units, int startIndex) returns int {
+    EdiUnitSchema first = units[startIndex];
+    if first !is EdiSegSchema || !segmentHasDiscriminator(first) {
+        return startIndex;
+    }
+    string runCode = first.code;
+    int runEnd = startIndex;
+    int i = startIndex + 1;
+    while i < units.length() {
+        EdiUnitSchema unit = units[i];
+        if unit is EdiSegSchema && unit.code == runCode && segmentHasDiscriminator(unit) {
+            runEnd = i;
+            i += 1;
+        } else {
+            break;
+        }
+    }
+    return runEnd;
+}
+
+# Reads input segments into a discriminated sibling run as an unordered set. While the next input
+# segment carries the run's segment code, every run member that can still accept an occurrence is
+# tried in schema order and the first member whose discriminators match consumes the segment — so
+# occurrences may arrive in any order and interleave freely. The run is left when a segment with a
+# different code arrives, when a same-code segment matches no member (an unknown discriminator
+# value falls through to the later units and, ultimately, the unmatched-segment check), or when
+# the input ends. On exit, every mandatory member must have at least one occurrence.
+#
+# + units - Unit schemas of the current segment group
+# + runEnd - Index of the last run member (the run starts at the current schema cursor)
+# + sgContext - Segment group parsing context
+# + context - EDI parsing context
+# + return - Error when a mandatory run member has no occurrence, or when reading a segment fails
+isolated function readDiscriminatedSiblingRun(EdiUnitSchema[] units, int runEnd,
+        SegmentGroupContext sgContext, EdiContext context) returns Error? {
+    EdiSchema ediSchema = context.schema;
+    int runStart = sgContext.schemaIndex;
+    EdiSegSchema firstMember = <EdiSegSchema>units[runStart];
+    string runCode = firstMember.code;
+    while context.rawIndex < context.ediText.length() {
+        string segmentDesc = removeLineBreaks(context.ediText[context.rawIndex]);
+        boolean ignoreCurrentSegment = false;
+        foreach string ignoreSegment in ediSchema.ignoreSegments {
+            if segmentDesc.startsWith(ignoreSegment) {
+                ignoreCurrentSegment = true;
+                break;
+            }
+        }
+        if ignoreCurrentSegment {
+            context.rawIndex += 1;
+            continue;
+        }
+        string[] fields = check splitFields(segmentDesc, ediSchema.delimiters.'field, firstMember);
+        if fields.length() == 0 || fields[0].trim() != runCode {
+            break;
+        }
+        boolean consumed = false;
+        foreach int i in runStart ... runEnd {
+            EdiSegSchema member = <EdiSegSchema>units[i];
+            if !runMemberCanAcceptMore(member, sgContext) {
+                continue;
+            }
+            if segmentMatches(member, fields, ediSchema) {
+                log:printDebug(string `Matched [Segment]: ${segmentDesc} with sibling-run member ${printSegMap(member)}`);
+                EdiSegment ediRecord = check readSegment(member, fields, ediSchema, segmentDesc);
+                check placeRunOccurrence(ediRecord, member, sgContext);
+                context.rawIndex += 1;
+                consumed = true;
+                break;
+            }
+        }
+        if !consumed {
+            break;
+        }
+    }
+    foreach int i in runStart ... runEnd {
+        EdiSegSchema member = <EdiSegSchema>units[i];
+        if member.minOccurances > 0 && !hasRunOccurrence(member, sgContext) {
+            return error Error(string `Mandatory segment is missing in the EDI.
+                Unit: ${printSegMap(member)}, Current mapping index: ${i}`);
+        }
+    }
+    sgContext.schemaIndex = runEnd + 1;
+}
+
+isolated function runMemberCanAcceptMore(EdiSegSchema member, SegmentGroupContext sgContext) returns boolean {
+    var existing = sgContext.segmentGroup[member.tag];
+    if member.maxOccurances == 1 {
+        return existing is ();
+    }
+    if existing is EdiSegment[] {
+        return member.maxOccurances == -1 || existing.length() < member.maxOccurances;
+    }
+    return true;
+}
+
+isolated function hasRunOccurrence(EdiSegSchema member, SegmentGroupContext sgContext) returns boolean {
+    var existing = sgContext.segmentGroup[member.tag];
+    if existing is EdiSegment[] {
+        return existing.length() > 0;
+    }
+    return existing !is ();
+}
+
+isolated function placeRunOccurrence(EdiSegment segment, EdiSegSchema member, SegmentGroupContext sgContext) returns Error? {
+    if member.maxOccurances == 1 {
+        sgContext.segmentGroup[member.tag] = segment;
+        return;
+    }
+    var existing = sgContext.segmentGroup[member.tag];
+    if existing is EdiSegment[] {
+        existing.push(segment);
+    } else if existing is () {
+        sgContext.segmentGroup[member.tag] = [segment];
+    } else {
+        return error Error(string `Segment must be a segment array. Segment: ${member.code}`);
+    }
 }

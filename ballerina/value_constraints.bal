@@ -53,6 +53,15 @@ isolated function segmentMatches(EdiSegSchema segSchema, string[] fields, EdiSch
     return true;
 }
 
+isolated function segmentHasDiscriminator(EdiSegSchema segSchema) returns boolean {
+    foreach EdiFieldSchema fieldSchema in segSchema.fields {
+        if hasDiscriminator(fieldSchema) {
+            return true;
+        }
+    }
+    return false;
+}
+
 isolated function hasDiscriminator(EdiFieldSchema fieldSchema) returns boolean {
     if fieldSchema.discriminator {
         return true;
