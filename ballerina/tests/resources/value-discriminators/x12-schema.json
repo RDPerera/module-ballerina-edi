@@ -26,7 +26,7 @@
       "maxOccurances": 1,
       "fields": [
         {"tag": "code"},
-        {"tag": "qualifier", "required": true, "values": ["0F"], "discriminator": true},
+        {"tag": "qualifier", "required": true, "discriminator": ["0F"]},
         {"tag": "identifier", "required": true}
       ]
     },
@@ -37,7 +37,7 @@
       "maxOccurances": 1,
       "fields": [
         {"tag": "code"},
-        {"tag": "qualifier", "required": true, "values": ["1L"], "discriminator": true},
+        {"tag": "qualifier", "required": true, "discriminator": ["1L"]},
         {"tag": "identifier", "required": true}
       ]
     },
@@ -48,7 +48,7 @@
       "maxOccurances": 13,
       "fields": [
         {"tag": "code"},
-        {"tag": "qualifier", "required": true, "values": ["17", "23", "DX"], "discriminator": true},
+        {"tag": "qualifier", "required": true, "discriminator": ["17", "23", "DX"]},
         {"tag": "identifier", "required": true}
       ]
     }

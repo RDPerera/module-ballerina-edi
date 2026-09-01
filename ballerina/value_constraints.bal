@@ -19,17 +19,17 @@ import ballerina/log;
 // EDI formats reuse the same segment code for definitions with different meanings and rely on a
 // qualifier value to identify each one (e.g. X12 834 uses REF*0F, REF*1L and REF*17 for three
 // different member-level definitions; EDIFACT RFF carries the equivalent qualifier inside the
-// C506 composite). Schema nodes can declare the legal codes of an element with `values`, and opt
-// the element into segment matching with `discriminator: true`. `values` on its own never affects
-// matching — it is validated when writing EDI — so converters can attach full standard code lists
-// without changing how existing messages parse.
+// C506 composite). Schema nodes declare the legal codes of an element with `values`, and the codes
+// that identify a definition with `discriminator`. `values` never affects matching — it is
+// validated when writing EDI — so converters can attach full standard code lists without changing
+// how existing messages parse; only a node carrying `discriminator` participates in matching.
 
 # Checks whether the given input segment is an instance of the given segment schema.
 #
 # A segment matches when its code matches and, for every discriminator node in the schema
 # (at field, component, or subcomponent level), the corresponding input value is present
-# and contained in that node's `values` set. A missing or empty discriminator value never
-# matches: a segment that does not carry its identity cannot claim a discriminated schema.
+# and contained in that node's `discriminator` set. A missing or empty discriminator value
+# never matches: a segment that does not carry its identity cannot claim a discriminated schema.
 #
 # + segSchema - Segment schema to match against
 # + fields - Fields of the input segment
@@ -63,15 +63,15 @@ isolated function segmentHasDiscriminator(EdiSegSchema segSchema) returns boolea
 }
 
 isolated function hasDiscriminator(EdiFieldSchema fieldSchema) returns boolean {
-    if fieldSchema.discriminator {
+    if fieldSchema.discriminator is string[] {
         return true;
     }
     foreach EdiComponentSchema componentSchema in fieldSchema.components {
-        if componentSchema.discriminator {
+        if componentSchema.discriminator is string[] {
             return true;
         }
         foreach EdiSubcomponentSchema subcomponentSchema in componentSchema.subcomponents {
-            if subcomponentSchema.discriminator {
+            if subcomponentSchema.discriminator is string[] {
                 return true;
             }
         }
@@ -84,9 +84,10 @@ isolated function fieldMatches(EdiFieldSchema fieldSchema, string rawField, EdiS
         // Discriminators on repeating fields are rejected at schema load time.
         return true;
     }
-    if fieldSchema.discriminator {
-        // Schema load validation guarantees that a discriminator field is a simple field with values.
-        if !valueInSet(rawField, fieldSchema.values) {
+    string[]? fieldDiscriminator = fieldSchema.discriminator;
+    if fieldDiscriminator is string[] {
+        // Schema load validation guarantees that a discriminator field is a simple field.
+        if !valueInSet(rawField, fieldDiscriminator) {
             return false;
         }
     }
@@ -98,7 +99,8 @@ isolated function fieldMatches(EdiFieldSchema fieldSchema, string rawField, EdiS
         foreach int j in 0 ..< fieldSchema.components.length() {
             EdiComponentSchema componentSchema = fieldSchema.components[j];
             string rawComponent = j < components.length() ? components[j] : "";
-            if componentSchema.discriminator && !valueInSet(rawComponent, componentSchema.values) {
+            string[]? componentDiscriminator = componentSchema.discriminator;
+            if componentDiscriminator is string[] && !valueInSet(rawComponent, componentDiscriminator) {
                 return false;
             }
             if componentSchema.subcomponents.length() > 0 && hasSubcomponentDiscriminator(componentSchema) {
@@ -108,11 +110,12 @@ isolated function fieldMatches(EdiFieldSchema fieldSchema, string rawField, EdiS
                 }
                 foreach int k in 0 ..< componentSchema.subcomponents.length() {
                     EdiSubcomponentSchema subcomponentSchema = componentSchema.subcomponents[k];
-                    if !subcomponentSchema.discriminator {
+                    string[]? subcomponentDiscriminator = subcomponentSchema.discriminator;
+                    if subcomponentDiscriminator is () {
                         continue;
                     }
                     string rawSubcomponent = k < subcomponents.length() ? subcomponents[k] : "";
-                    if !valueInSet(rawSubcomponent, subcomponentSchema.values) {
+                    if !valueInSet(rawSubcomponent, subcomponentDiscriminator) {
                         return false;
                     }
                 }
@@ -124,18 +127,14 @@ isolated function fieldMatches(EdiFieldSchema fieldSchema, string rawField, EdiS
 
 isolated function hasSubcomponentDiscriminator(EdiComponentSchema componentSchema) returns boolean {
     foreach EdiSubcomponentSchema subcomponentSchema in componentSchema.subcomponents {
-        if subcomponentSchema.discriminator {
+        if subcomponentSchema.discriminator is string[] {
             return true;
         }
     }
     return false;
 }
 
-isolated function valueInSet(string value, string[]? allowedValues) returns boolean {
-    if allowedValues is () {
-        // Discriminators without values are rejected at schema load time; treated as non-matching defensively.
-        return false;
-    }
+isolated function valueInSet(string value, string[] allowedValues) returns boolean {
     string normalized = value.trim();
     if normalized == "" {
         return false;
@@ -143,15 +142,20 @@ isolated function valueInSet(string value, string[]? allowedValues) returns bool
     return allowedValues.indexOf(normalized, 0) !is ();
 }
 
-# Validates a value against the `values` set of a schema node when writing EDI.
-# Empty values are not validated here — presence rules are enforced by the `required` attribute.
+# Validates a value against the value constraints of a schema node when writing EDI.
+# A node's `discriminator` is the tighter constraint (schema load guarantees it is a subset of
+# `values` when both are present), so it is enforced when present: writing a value outside it
+# would produce EDI that no longer identifies this definition. Empty values are not validated
+# here — presence rules are enforced by the `required` attribute.
 #
 # + value - Input value being written
-# + allowedValues - The node's `values` set, if any
+# + values - The node's `values` set, if any
+# + discriminator - The node's `discriminator` set, if any
 # + segTag - Tag of the containing segment schema (used in error messages)
 # + nodeTag - Tag of the schema node (used in error messages)
-# + return - Error if the value is not in the allowed set
-isolated function validateAllowedValue(json value, string[]? allowedValues, string segTag, string nodeTag) returns Error? {
+# + return - Error if the value is not in the effective set
+isolated function validateAllowedValue(json value, string[]? values, string[]? discriminator, string segTag, string nodeTag) returns Error? {
+    string[]? allowedValues = discriminator is string[] ? discriminator : values;
     if allowedValues is () {
         return;
     }
@@ -169,8 +173,9 @@ isolated function validateAllowedValue(json value, string[]? allowedValues, stri
 # definitions for missing or overlapping discriminators.
 #
 # + schema - Schema to validate
-# + return - Error if a discriminator is declared without values, on a repeating field,
-# or on a node whose value is not a simple value (composite fields and components with subcomponents)
+# + return - Error if a discriminator is empty, declared on a repeating field, declared on a node
+# whose value is not a simple value (composite fields and components with subcomponents), or
+# inconsistent with the node's `values` set
 isolated function validateValueConstraints(EdiSchema schema) returns Error? {
     check validateUnitList(schema.segments);
     EdiEnvelopeSchema? envelope = schema.envelope;
@@ -201,48 +206,65 @@ isolated function validateUnitList(EdiUnitSchema[] units) returns Error? {
 
 isolated function validateSegmentValueConstraints(EdiSegSchema segSchema) returns Error? {
     foreach EdiFieldSchema fieldSchema in segSchema.fields {
-        if fieldSchema.components.length() > 0 && fieldSchema.values !is () {
-            // The value of a composite field is a component group; only its simple leaves hold
-            // values a constraint could apply to, so a constraint here can never be validated.
-            return error Error(string `"values" on a composite field must be declared on the component holding the value.
+        boolean composite = fieldSchema.components.length() > 0;
+        // The value of a composite field is a component group; only its simple leaves hold values
+        // a constraint could apply to, so a constraint here could never be applied.
+        check rejectConstraintsOnGroup(composite, fieldSchema.values, fieldSchema.discriminator,
+                segSchema.tag, fieldSchema.tag, "composite field", "component");
+        if fieldSchema.discriminator is string[] && fieldSchema.repeat {
+            return error Error(string `Discriminators are not supported on repeating fields.
                 Segment: ${segSchema.tag}, Field: ${fieldSchema.tag}`);
         }
-        if fieldSchema.discriminator {
-            if fieldSchema.repeat {
-                return error Error(string `Discriminators are not supported on repeating fields.
-                    Segment: ${segSchema.tag}, Field: ${fieldSchema.tag}`);
-            }
-            if fieldSchema.components.length() > 0 {
-                return error Error(string `Discriminators on composite fields must be declared on the component holding the value.
-                    Segment: ${segSchema.tag}, Field: ${fieldSchema.tag}`);
-            }
-            check requireValues(fieldSchema.values, segSchema.tag, fieldSchema.tag);
-        }
+        check validateNodeConstraints(fieldSchema.values, fieldSchema.discriminator, segSchema.tag, fieldSchema.tag);
+
         foreach EdiComponentSchema componentSchema in fieldSchema.components {
-            if componentSchema.subcomponents.length() > 0 && componentSchema.values !is () {
-                return error Error(string `"values" on a component with subcomponents must be declared on the subcomponent holding the value.
-                    Segment: ${segSchema.tag}, Component: ${componentSchema.tag}`);
-            }
-            if componentSchema.discriminator {
-                if componentSchema.subcomponents.length() > 0 {
-                    return error Error(string `Discriminators on components with subcomponents must be declared on the subcomponent holding the value.
-                        Segment: ${segSchema.tag}, Component: ${componentSchema.tag}`);
-                }
-                check requireValues(componentSchema.values, segSchema.tag, componentSchema.tag);
-            }
+            boolean grouped = componentSchema.subcomponents.length() > 0;
+            check rejectConstraintsOnGroup(grouped, componentSchema.values, componentSchema.discriminator,
+                    segSchema.tag, componentSchema.tag, "component with subcomponents", "subcomponent");
+            check validateNodeConstraints(componentSchema.values, componentSchema.discriminator,
+                    segSchema.tag, componentSchema.tag);
             foreach EdiSubcomponentSchema subcomponentSchema in componentSchema.subcomponents {
-                if subcomponentSchema.discriminator {
-                    check requireValues(subcomponentSchema.values, segSchema.tag, subcomponentSchema.tag);
-                }
+                check validateNodeConstraints(subcomponentSchema.values, subcomponentSchema.discriminator,
+                        segSchema.tag, subcomponentSchema.tag);
             }
         }
     }
 }
 
-isolated function requireValues(string[]? values, string segTag, string nodeTag) returns Error? {
-    if values is () || values.length() == 0 {
-        return error Error(string `Discriminator nodes must declare a non-empty "values" set.
+// Constraints must sit on the element that holds the value, never on a node whose value is a group
+// of child elements.
+isolated function rejectConstraintsOnGroup(boolean isGroup, string[]? values, string[]? discriminator,
+        string segTag, string nodeTag, string nodeKind, string childKind) returns Error? {
+    if !isGroup {
+        return;
+    }
+    if values !is () {
+        return error Error(string `"values" on a ${nodeKind} must be declared on the ${childKind} holding the value.
             Segment: ${segTag}, Element: ${nodeTag}`);
+    }
+    if discriminator !is () {
+        return error Error(string `"discriminator" on a ${nodeKind} must be declared on the ${childKind} holding the value.
+            Segment: ${segTag}, Element: ${nodeTag}`);
+    }
+}
+
+// A discriminator must list at least one code, and when the node also declares `values` (the
+// element's full legal code list), every discriminating code must be one of them.
+isolated function validateNodeConstraints(string[]? values, string[]? discriminator, string segTag, string nodeTag) returns Error? {
+    if discriminator is () {
+        return;
+    }
+    if discriminator.length() == 0 {
+        return error Error(string `"discriminator" must list at least one value.
+            Segment: ${segTag}, Element: ${nodeTag}`);
+    }
+    if values is string[] {
+        foreach string code in discriminator {
+            if values.indexOf(code, 0) is () {
+                return error Error(string `Discriminating value is not one of the values allowed by the element.
+                    Segment: ${segTag}, Element: ${nodeTag}, Value: ${code}, Allowed values: ${values.toString()}`);
+            }
+        }
     }
 }
 
@@ -309,32 +331,26 @@ isolated function discriminatorSignature(EdiSegSchema segSchema) returns string[
     string[] signature = [];
     foreach int i in 0 ..< segSchema.fields.length() {
         EdiFieldSchema fieldSchema = segSchema.fields[i];
-        if fieldSchema.discriminator {
-            string[]? values = fieldSchema.values;
-            if values is string[] {
-                foreach string value in values {
-                    signature.push(string `${i}=${value}`);
-                }
+        string[]? fieldDiscriminator = fieldSchema.discriminator;
+        if fieldDiscriminator is string[] {
+            foreach string value in fieldDiscriminator {
+                signature.push(string `${i}=${value}`);
             }
         }
         foreach int j in 0 ..< fieldSchema.components.length() {
             EdiComponentSchema componentSchema = fieldSchema.components[j];
-            if componentSchema.discriminator {
-                string[]? values = componentSchema.values;
-                if values is string[] {
-                    foreach string value in values {
-                        signature.push(string `${i}.${j}=${value}`);
-                    }
+            string[]? componentDiscriminator = componentSchema.discriminator;
+            if componentDiscriminator is string[] {
+                foreach string value in componentDiscriminator {
+                    signature.push(string `${i}.${j}=${value}`);
                 }
             }
             foreach int k in 0 ..< componentSchema.subcomponents.length() {
                 EdiSubcomponentSchema subcomponentSchema = componentSchema.subcomponents[k];
-                if subcomponentSchema.discriminator {
-                    string[]? values = subcomponentSchema.values;
-                    if values is string[] {
-                        foreach string value in values {
-                            signature.push(string `${i}.${j}.${k}=${value}`);
-                        }
+                string[]? subcomponentDiscriminator = subcomponentSchema.discriminator;
+                if subcomponentDiscriminator is string[] {
+                    foreach string value in subcomponentDiscriminator {
+                        signature.push(string `${i}.${j}.${k}=${value}`);
                     }
                 }
             }

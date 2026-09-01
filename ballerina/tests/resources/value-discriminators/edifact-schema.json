@@ -14,7 +14,7 @@
       "fields": [
         {"tag": "code"},
         {"tag": "REFERENCE", "required": true, "components": [
-          {"tag": "qualifier", "required": true, "values": ["SS"], "discriminator": true},
+          {"tag": "qualifier", "required": true, "discriminator": ["SS"]},
           {"tag": "number", "required": true}
         ]}
       ]
@@ -25,7 +25,7 @@
       "fields": [
         {"tag": "code"},
         {"tag": "REFERENCE", "required": true, "components": [
-          {"tag": "qualifier", "required": true, "values": ["VA"], "discriminator": true},
+          {"tag": "qualifier", "required": true, "discriminator": ["VA"]},
           {"tag": "number", "required": true}
         ]}
       ]

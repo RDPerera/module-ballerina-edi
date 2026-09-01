@@ -498,7 +498,7 @@ References are resolved by `getSchema` before parsing.
 | `startIndex` | `-1` | Start index of the field within the segment. Fixed-length formats only |
 | `length` | `-1` | Fixed length, or a `{"min": N, "max": M}` range |
 | `values` | — | Legal codes of the field ([Section 7.4.3](#743-value-constraints-and-qualifier-based-discrimination)) |
-| `discriminator` | `false` | Opts the field's `values` into segment matching ([Section 7.4.3](#743-value-constraints-and-qualifier-based-discrimination)) |
+| `discriminator` | — | Codes that identify this definition during segment matching ([Section 7.4.3](#743-value-constraints-and-qualifier-based-discrimination)) |
 | `components` | — | Component definitions, when `dataType` is `composite` |
 
 #### 7.4.1. Data types
@@ -543,17 +543,19 @@ value sets with two attributes:
 
 | Field | Default | Meaning |
 | --- | --- | --- |
-| `values` | — | The legal codes of the element. Validated when writing EDI; never affects segment matching on its own |
-| `discriminator` | `false` | Opts the element's `values` into segment matching |
+| `values` | — | The legal codes of the element. Validated when writing EDI; never affects segment matching |
+| `discriminator` | — | The codes that identify this definition. Used for segment matching, and validated when writing EDI |
 
-Because `values` alone is inert for matching, tools can attach full standard code lists without
-changing how existing messages parse; routing changes only where `discriminator` is deliberately
-enabled.
+Because `values` never affects matching, tools can attach full standard code lists without changing
+how existing messages parse; routing happens only where a `discriminator` is declared. An element
+may declare both: `values` records the element's full legal code list (for example the standard's
+code list for the data element) while `discriminator` records the narrower set an implementation
+guide permits at this position.
 
 Matching semantics:
 
 - An input segment is an instance of a definition only when the segment code matches **and** every
-  discriminator element's value is contained in its `values` set.
+  discriminator element's value is contained in its `discriminator` set.
 - A missing or empty discriminator value never matches — a segment that does not carry its identity
   cannot claim a discriminated definition.
 - When a segment matches no definition at the current schema position, parsing fails with an error
@@ -570,8 +572,9 @@ Matching semantics:
 
 Rules enforced when the schema is loaded:
 
-- A `discriminator` must declare a non-empty `values` set and must not be placed on a repeating
-  field.
+- A `discriminator` must list at least one code and must not be placed on a repeating field.
+- When an element declares both attributes, every `discriminator` code must also appear in
+  `values` — a definition that requires a code the element does not permit could never match.
 - Both attributes belong on the element that actually holds the value: on a component rather than
   the composite field around it, and on a sub-component rather than the component around it.
   `values` and `discriminator` on composite nodes are rejected.
@@ -588,7 +591,7 @@ Rules enforced when the schema is loaded:
     "minOccurances": 0,
     "fields": [
         {"tag": "code"},
-        {"tag": "qualifier", "required": true, "values": ["1L"], "discriminator": true},
+        {"tag": "qualifier", "required": true, "discriminator": ["1L"]},
         {"tag": "identifier", "required": true}
     ]
 }
@@ -610,7 +613,7 @@ per position:
         "fields": [
             {"tag": "code"},
             {"tag": "REFERENCE", "required": true, "components": [
-                {"tag": "qualifier", "required": true, "values": ["VA"], "discriminator": true},
+                {"tag": "qualifier", "required": true, "discriminator": ["VA"]},
                 {"tag": "number", "required": true}
             ]}
         ]

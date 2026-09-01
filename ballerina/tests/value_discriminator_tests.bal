@@ -140,20 +140,72 @@ function testWriterRejectsComponentValueOutsideAllowedSet() returns error? {
 }
 
 @test:Config
-function testDiscriminatorWithoutValuesIsRejectedAtLoadTime() returns error? {
+function testEmptyDiscriminatorIsRejectedAtLoadTime() returns error? {
     json schemaJson = {
-        "name": "InvalidDiscriminatorTest",
+        "name": "EmptyDiscriminatorTest",
         "delimiters": {"segment": "~", "field": "*", "component": ":"},
         "segments": [
             {
                 "code": "REF",
                 "tag": "Reference",
-                "fields": [{"tag": "code"}, {"tag": "qualifier", "discriminator": true}]
+                "fields": [{"tag": "code"}, {"tag": "qualifier", "discriminator": []}]
             }
         ]
     };
     EdiSchema|error schema = getSchema(schemaJson);
-    test:assertTrue(schema is error, "Discriminators without a values set must be rejected at schema load time");
+    test:assertTrue(schema is error, "An empty discriminator must be rejected at schema load time");
+}
+
+@test:Config
+function testDiscriminatorOutsideValuesIsRejectedAtLoadTime() returns error? {
+    // When a node declares both, the discriminating codes must be part of the element's
+    // legal code list - otherwise the definition could never match a valid segment.
+    json schemaJson = {
+        "name": "DiscriminatorSubsetTest",
+        "delimiters": {"segment": "~", "field": "*", "component": ":"},
+        "segments": [
+            {
+                "code": "REF",
+                "tag": "Reference",
+                "fields": [
+                    {"tag": "code"},
+                    {"tag": "qualifier", "values": ["0F", "1L"], "discriminator": ["ZZ"]}
+                ]
+            }
+        ]
+    };
+    EdiSchema|error schema = getSchema(schemaJson);
+    test:assertTrue(schema is error,
+        "A discriminating value outside the element's values set must be rejected at schema load time");
+}
+
+@test:Config
+function testDiscriminatorSubsetOfValuesIsAccepted() returns error? {
+    // The common real-world shape: the element's full standard code list in `values`,
+    // the implementation guide's narrowed routing set in `discriminator`.
+    json schemaJson = {
+        "name": "DiscriminatorSubsetOk",
+        "delimiters": {"segment": "~", "field": "*", "component": ":"},
+        "preserveEmptyFields": false,
+        "segments": [
+            {
+                "code": "REF",
+                "tag": "PolicyNumber",
+                "minOccurances": 0,
+                "fields": [
+                    {"tag": "code"},
+                    {"tag": "qualifier", "required": true, "values": ["0F", "1L", "17"], "discriminator": ["1L"]},
+                    {"tag": "identifier", "required": true}
+                ]
+            }
+        ]
+    };
+    EdiSchema schema = check getSchema(schemaJson);
+    json result = check fromEdiString("REF*1L*373~", schema);
+    test:assertEquals(check result.PolicyNumber.identifier, "373");
+    // 17 is legal for the element but is not a discriminating value, so it matches nothing here.
+    test:assertTrue(fromEdiString("REF*17*X~", schema) is Error,
+        "A value that is legal for the element but not a discriminating value must not match");
 }
 
 @test:Config
@@ -167,7 +219,7 @@ function testDiscriminatorOnRepeatingFieldIsRejectedAtLoadTime() returns error? 
                 "tag": "Reference",
                 "fields": [
                     {"tag": "code"},
-                    {"tag": "qualifier", "repeat": true, "values": ["1L"], "discriminator": true}
+                    {"tag": "qualifier", "repeat": true, "discriminator": ["1L"]}
                 ]
             }
         ]
@@ -189,8 +241,7 @@ function testDiscriminatorOnCompositeFieldIsRejectedAtLoadTime() returns error? 
                     {"tag": "code"},
                     {
                         "tag": "REFERENCE",
-                        "values": ["VA"],
-                        "discriminator": true,
+                        "discriminator": ["VA"],
                         "components": [{"tag": "qualifier"}, {"tag": "number"}]
                     }
                 ]
@@ -228,9 +279,9 @@ function testInterleavedRepeatableSiblingRun() returns error? {
         "preserveEmptyFields": false,
         "segments": [
             {"code": "ALC", "tag": "Allowance", "minOccurances": 0, "maxOccurances": -1, "fields": [
-                {"tag": "code"}, {"tag": "kind", "values": ["A"], "discriminator": true}, {"tag": "v"}]},
+                {"tag": "code"}, {"tag": "kind", "discriminator": ["A"]}, {"tag": "v"}]},
             {"code": "ALC", "tag": "Charge", "minOccurances": 0, "maxOccurances": -1, "fields": [
-                {"tag": "code"}, {"tag": "kind", "values": ["C"], "discriminator": true}, {"tag": "v"}]}
+                {"tag": "code"}, {"tag": "kind", "discriminator": ["C"]}, {"tag": "v"}]}
         ]
     };
     EdiSchema schema = check getSchema(schemaJson);
@@ -270,9 +321,9 @@ function testSiblingRunRespectsMaxOccurrences() returns error? {
         "preserveEmptyFields": false,
         "segments": [
             {"code": "REF", "tag": "First", "minOccurances": 0, "maxOccurances": 1, "fields": [
-                {"tag": "code"}, {"tag": "q", "values": ["A"], "discriminator": true}, {"tag": "v"}]},
+                {"tag": "code"}, {"tag": "q", "discriminator": ["A"]}, {"tag": "v"}]},
             {"code": "REF", "tag": "Second", "minOccurances": 0, "maxOccurances": 1, "fields": [
-                {"tag": "code"}, {"tag": "q", "values": ["B"], "discriminator": true}, {"tag": "v"}]}
+                {"tag": "code"}, {"tag": "q", "discriminator": ["B"]}, {"tag": "v"}]}
         ]
     };
     EdiSchema schema = check getSchema(schemaJson);
@@ -290,7 +341,7 @@ function testMixedSameCodeSiblingsAreRejectedAtLoadTime() returns error? {
         "delimiters": {"segment": "~", "field": "*", "component": ":"},
         "segments": [
             {"code": "REF", "tag": "Policy", "minOccurances": 0, "fields": [
-                {"tag": "code"}, {"tag": "q", "values": ["1L"], "discriminator": true}, {"tag": "v"}]},
+                {"tag": "code"}, {"tag": "q", "discriminator": ["1L"]}, {"tag": "v"}]},
             {"code": "REF", "tag": "AnythingElse", "minOccurances": 0, "fields": [
                 {"tag": "code"}, {"tag": "q"}, {"tag": "v"}]}
         ]
