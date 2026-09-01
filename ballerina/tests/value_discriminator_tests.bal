@@ -280,3 +280,60 @@ function testSiblingRunRespectsMaxOccurrences() returns error? {
     json|Error result = fromEdiString("REF*A*1~\nREF*A*2~", schema);
     test:assertTrue(result is Error, "A run member must not exceed its maximum occurrences");
 }
+
+@test:Config
+function testMixedSameCodeSiblingsAreRejectedAtLoadTime() returns error? {
+    // A discriminated REF definition followed by a code-only REF definition: the code-only
+    // sibling would capture the segments its discriminated sibling rejected.
+    json schemaJson = {
+        "name": "MixedSiblingsTest",
+        "delimiters": {"segment": "~", "field": "*", "component": ":"},
+        "segments": [
+            {"code": "REF", "tag": "Policy", "minOccurances": 0, "fields": [
+                {"tag": "code"}, {"tag": "q", "values": ["1L"], "discriminator": true}, {"tag": "v"}]},
+            {"code": "REF", "tag": "AnythingElse", "minOccurances": 0, "fields": [
+                {"tag": "code"}, {"tag": "q"}, {"tag": "v"}]}
+        ]
+    };
+    EdiSchema|error schema = getSchema(schemaJson);
+    test:assertTrue(schema is error,
+        "Mixing discriminated and non-discriminated same-code siblings must be rejected at schema load time");
+}
+
+@test:Config
+function testValuesOnCompositeFieldIsRejectedAtLoadTime() returns error? {
+    json schemaJson = {
+        "name": "ValuesOnCompositeTest",
+        "delimiters": {"segment": "~", "field": "*", "component": ":"},
+        "segments": [
+            {"code": "RFF", "tag": "Reference", "fields": [
+                {"tag": "code"},
+                {"tag": "REFERENCE", "values": ["VA"], "components": [
+                    {"tag": "qualifier"}, {"tag": "number"}]}
+            ]}
+        ]
+    };
+    EdiSchema|error schema = getSchema(schemaJson);
+    test:assertTrue(schema is error,
+        "values on a composite field must be rejected: the writer can never validate it");
+}
+
+@test:Config
+function testValuesOnComponentWithSubcomponentsIsRejectedAtLoadTime() returns error? {
+    json schemaJson = {
+        "name": "ValuesOnComponentTest",
+        "delimiters": {"segment": "~", "field": "*", "component": ":", "subcomponent": "^"},
+        "segments": [
+            {"code": "SEG", "tag": "Sample", "fields": [
+                {"tag": "code"},
+                {"tag": "comp", "components": [
+                    {"tag": "inner", "values": ["A"], "subcomponents": [
+                        {"tag": "kind"}, {"tag": "val"}]}
+                ]}
+            ]}
+        ]
+    };
+    EdiSchema|error schema = getSchema(schemaJson);
+    test:assertTrue(schema is error,
+        "values on a component with subcomponents must be rejected: the writer can never validate it");
+}

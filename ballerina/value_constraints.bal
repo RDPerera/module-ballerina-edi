@@ -196,11 +196,17 @@ isolated function validateUnitList(EdiUnitSchema[] units) returns Error? {
         }
         // Segment references are resolved during denormalization before this validation runs.
     }
-    lintSameCodeSiblings(units);
+    check lintSameCodeSiblings(units);
 }
 
 isolated function validateSegmentValueConstraints(EdiSegSchema segSchema) returns Error? {
     foreach EdiFieldSchema fieldSchema in segSchema.fields {
+        if fieldSchema.components.length() > 0 && fieldSchema.values !is () {
+            // The value of a composite field is a component group; only its simple leaves hold
+            // values a constraint could apply to, so a constraint here can never be validated.
+            return error Error(string `"values" on a composite field must be declared on the component holding the value.
+                Segment: ${segSchema.tag}, Field: ${fieldSchema.tag}`);
+        }
         if fieldSchema.discriminator {
             if fieldSchema.repeat {
                 return error Error(string `Discriminators are not supported on repeating fields.
@@ -213,6 +219,10 @@ isolated function validateSegmentValueConstraints(EdiSegSchema segSchema) return
             check requireValues(fieldSchema.values, segSchema.tag, fieldSchema.tag);
         }
         foreach EdiComponentSchema componentSchema in fieldSchema.components {
+            if componentSchema.subcomponents.length() > 0 && componentSchema.values !is () {
+                return error Error(string `"values" on a component with subcomponents must be declared on the subcomponent holding the value.
+                    Segment: ${segSchema.tag}, Component: ${componentSchema.tag}`);
+            }
             if componentSchema.discriminator {
                 if componentSchema.subcomponents.length() > 0 {
                     return error Error(string `Discriminators on components with subcomponents must be declared on the subcomponent holding the value.
@@ -236,10 +246,14 @@ isolated function requireValues(string[]? values, string segTag, string nodeTag)
     }
 }
 
-// Warns when sibling definitions sharing a segment code cannot be reliably told apart:
-// either a sibling has no discriminator (first-in-order matching applies), or two siblings
-// allow the same discriminator value (the earlier definition silently wins).
-isolated function lintSameCodeSiblings(EdiUnitSchema[] units) {
+// Checks sibling definitions sharing a segment code:
+// - Mixing discriminated and non-discriminated siblings of one code is rejected: a code-only
+//   sibling would capture the segments its discriminated siblings rejected, silently.
+// - When no sibling has a discriminator, first-in-order matching applies and each sibling is
+//   reported with a warning.
+// - Overlapping discriminator value sets are reported with a warning (the earlier definition
+//   in schema order wins).
+isolated function lintSameCodeSiblings(EdiUnitSchema[] units) returns Error? {
     map<EdiSegSchema[]> segmentsByCode = {};
     foreach EdiUnitSchema unit in units {
         if unit is EdiSegSchema {
@@ -256,12 +270,26 @@ isolated function lintSameCodeSiblings(EdiUnitSchema[] units) {
             continue;
         }
         string[][] signatures = [];
+        string[] undiscriminatedTags = [];
+        boolean anyDiscriminated = false;
         foreach EdiSegSchema sibling in siblings {
             string[] signature = discriminatorSignature(sibling);
             if signature.length() == 0 {
-                log:printWarn(string `Multiple sibling definitions share the segment code "${code}" and the definition "${sibling.tag}" has no discriminator. Input segments are assigned to the first definition in schema order.`);
+                undiscriminatedTags.push(sibling.tag);
+            } else {
+                anyDiscriminated = true;
             }
             signatures.push(signature);
+        }
+        if anyDiscriminated && undiscriminatedTags.length() > 0 {
+            return error Error(string `Definitions sharing the segment code "${code}" mix discriminated and non-discriminated siblings.
+                A definition without a discriminator would capture the segments its discriminated siblings rejected.
+                Definitions without discriminators: ${undiscriminatedTags.toString()}`);
+        }
+        if !anyDiscriminated {
+            foreach string tag in undiscriminatedTags {
+                log:printWarn(string `Multiple sibling definitions share the segment code "${code}" and the definition "${tag}" has no discriminator. Input segments are assigned to the first definition in schema order.`);
+            }
         }
         foreach int i in 0 ..< siblings.length() {
             foreach int j in (i + 1) ..< siblings.length() {
