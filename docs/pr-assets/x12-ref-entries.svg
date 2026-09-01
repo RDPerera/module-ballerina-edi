@@ -1,0 +1,57 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 760 312" width="760" height="312" role="img" aria-label="Three X12 834 segments all use code REF; only the qualifier value 0F, 1L or 17 says which schema entry each segment belongs to">
+  <defs>
+    <marker id="aT" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" fill="#0E6E6E"/></marker>
+  </defs>
+  <rect x="1" y="1" width="758" height="310" rx="12" fill="#FFFFFF" stroke="#C9D4DC"/>
+
+  <text x="24" y="36" font-family="-apple-system,'Segoe UI',Helvetica,Arial,sans-serif" font-size="15" font-weight="700" fill="#1F2933">X12 834 member loop — three schema entries, one segment code</text>
+
+  <text x="24" y="62" font-family="Menlo,Consolas,'DejaVu Sans Mono',monospace" font-size="10.5" letter-spacing="1" fill="#5C6B79">THE FILE</text>
+  <text x="420" y="62" font-family="Menlo,Consolas,'DejaVu Sans Mono',monospace" font-size="10.5" letter-spacing="1" fill="#5C6B79">THE SCHEMA ENTRIES</text>
+
+  <!-- row 1 -->
+  <rect x="24" y="72" width="44" height="28" rx="4" fill="#EAEEF2" stroke="#C9D4DC"/>
+  <text x="46" y="91" text-anchor="middle" font-family="Menlo,Consolas,'DejaVu Sans Mono',monospace" font-size="13" font-weight="700" fill="#5C6B79">REF</text>
+  <text x="73" y="91" font-family="Menlo,Consolas,monospace" font-size="13" fill="#8A99A8">*</text>
+  <rect x="84" y="72" width="36" height="28" rx="4" fill="#DCEBE9" stroke="#0E6E6E"/>
+  <text x="102" y="91" text-anchor="middle" font-family="Menlo,Consolas,'DejaVu Sans Mono',monospace" font-size="13" font-weight="700" fill="#0A5A5A">0F</text>
+  <text x="125" y="91" font-family="Menlo,Consolas,monospace" font-size="13" fill="#8A99A8">*</text>
+  <text x="138" y="91" font-family="Menlo,Consolas,'DejaVu Sans Mono',monospace" font-size="13" fill="#1F2933">110011113~</text>
+
+  <!-- row 2 -->
+  <rect x="24" y="132" width="44" height="28" rx="4" fill="#EAEEF2" stroke="#C9D4DC"/>
+  <text x="46" y="151" text-anchor="middle" font-family="Menlo,Consolas,'DejaVu Sans Mono',monospace" font-size="13" font-weight="700" fill="#5C6B79">REF</text>
+  <text x="73" y="151" font-family="Menlo,Consolas,monospace" font-size="13" fill="#8A99A8">*</text>
+  <rect x="84" y="132" width="36" height="28" rx="4" fill="#DCEBE9" stroke="#0E6E6E"/>
+  <text x="102" y="151" text-anchor="middle" font-family="Menlo,Consolas,'DejaVu Sans Mono',monospace" font-size="13" font-weight="700" fill="#0A5A5A">1L</text>
+  <text x="125" y="151" font-family="Menlo,Consolas,monospace" font-size="13" fill="#8A99A8">*</text>
+  <text x="138" y="151" font-family="Menlo,Consolas,'DejaVu Sans Mono',monospace" font-size="13" fill="#1F2933">373~</text>
+
+  <!-- row 3 -->
+  <rect x="24" y="192" width="44" height="28" rx="4" fill="#EAEEF2" stroke="#C9D4DC"/>
+  <text x="46" y="211" text-anchor="middle" font-family="Menlo,Consolas,'DejaVu Sans Mono',monospace" font-size="13" font-weight="700" fill="#5C6B79">REF</text>
+  <text x="73" y="211" font-family="Menlo,Consolas,monospace" font-size="13" fill="#8A99A8">*</text>
+  <rect x="84" y="192" width="36" height="28" rx="4" fill="#DCEBE9" stroke="#0E6E6E"/>
+  <text x="102" y="211" text-anchor="middle" font-family="Menlo,Consolas,'DejaVu Sans Mono',monospace" font-size="13" font-weight="700" fill="#0A5A5A">17</text>
+  <text x="125" y="211" font-family="Menlo,Consolas,monospace" font-size="13" fill="#8A99A8">*</text>
+  <text x="138" y="211" font-family="Menlo,Consolas,'DejaVu Sans Mono',monospace" font-size="13" fill="#1F2933">Bargained~</text>
+
+  <!-- entry cards -->
+  <rect x="420" y="68" width="316" height="42" rx="8" fill="#F4F6F8" stroke="#C9D4DC"/>
+  <text x="434" y="86" font-family="-apple-system,'Segoe UI',Helvetica,Arial,sans-serif" font-size="13" font-weight="700" fill="#1F2933">SubscriberIdentifier</text>
+  <text x="434" y="102" font-family="-apple-system,'Segoe UI',Helvetica,Arial,sans-serif" font-size="11.5" fill="#5C6B79">accepts qualifier 0F · required</text>
+  <rect x="420" y="128" width="316" height="42" rx="8" fill="#F4F6F8" stroke="#C9D4DC"/>
+  <text x="434" y="146" font-family="-apple-system,'Segoe UI',Helvetica,Arial,sans-serif" font-size="13" font-weight="700" fill="#1F2933">MemberPolicyNumber</text>
+  <text x="434" y="162" font-family="-apple-system,'Segoe UI',Helvetica,Arial,sans-serif" font-size="11.5" fill="#5C6B79">accepts qualifier 1L · OPTIONAL — may be absent</text>
+  <rect x="420" y="188" width="316" height="42" rx="8" fill="#F4F6F8" stroke="#C9D4DC"/>
+  <text x="434" y="206" font-family="-apple-system,'Segoe UI',Helvetica,Arial,sans-serif" font-size="13" font-weight="700" fill="#1F2933">MemberSupplementalIdentifier</text>
+  <text x="434" y="222" font-family="-apple-system,'Segoe UI',Helvetica,Arial,sans-serif" font-size="11.5" fill="#5C6B79">accepts qualifiers 17, 23, DX · up to 13 times</text>
+
+  <!-- arrows -->
+  <line x1="266" y1="86" x2="414" y2="89" stroke="#0E6E6E" stroke-width="1.6" marker-end="url(#aT)"/>
+  <line x1="192" y1="146" x2="414" y2="149" stroke="#0E6E6E" stroke-width="1.6" marker-end="url(#aT)"/>
+  <line x1="266" y1="206" x2="414" y2="209" stroke="#0E6E6E" stroke-width="1.6" marker-end="url(#aT)"/>
+
+  <text x="380" y="264" text-anchor="middle" font-family="-apple-system,'Segoe UI',Helvetica,Arial,sans-serif" font-size="13" fill="#5C6B79">the segment code is the same on every line —</text>
+  <text x="380" y="286" text-anchor="middle" font-family="-apple-system,'Segoe UI',Helvetica,Arial,sans-serif" font-size="13.5" font-weight="700" fill="#0E6E6E">only the QUALIFIER ( 0F / 1L / 17 ) says which entry a segment belongs to</text>
+</svg>
