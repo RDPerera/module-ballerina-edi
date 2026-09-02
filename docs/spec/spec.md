@@ -572,7 +572,11 @@ Matching semantics:
 
 Rules enforced when the schema is loaded:
 
-- A `discriminator` must list at least one code and must not be placed on a repeating field.
+- A `discriminator` must list at least one code and must not be placed on a repeating field, nor on
+  any component or sub-component of one: repetitions are position-insignificant, so nothing inside a
+  repeating field can identify a definition.
+- A sub-component `discriminator` requires `delimiters.subcomponent` to be configured; without it a
+  sub-component cannot be isolated from the component text around it.
 - When an element declares both attributes, every `discriminator` code must also appear in
   `values` — a definition that requires a code the element does not permit could never match.
 - Both attributes belong on the element that actually holds the value: on a component rather than

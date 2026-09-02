@@ -177,34 +177,34 @@ isolated function validateAllowedValue(json value, string[]? values, string[]? d
 # whose value is not a simple value (composite fields and components with subcomponents), or
 # inconsistent with the node's `values` set
 isolated function validateValueConstraints(EdiSchema schema) returns Error? {
-    check validateUnitList(schema.segments);
+    check validateUnitList(schema.segments, schema);
     EdiEnvelopeSchema? envelope = schema.envelope;
     if envelope is EdiEnvelopeSchema {
-        check validateUnitList(envelope.interchange.header);
-        check validateUnitList(envelope.interchange.trailer);
+        check validateUnitList(envelope.interchange.header, schema);
+        check validateUnitList(envelope.interchange.trailer, schema);
         EdiEnvelopeLevel? groupLevel = envelope.group;
         if groupLevel is EdiEnvelopeLevel {
-            check validateUnitList(groupLevel.header);
-            check validateUnitList(groupLevel.trailer);
+            check validateUnitList(groupLevel.header, schema);
+            check validateUnitList(groupLevel.trailer, schema);
         }
-        check validateUnitList(envelope.'transaction.header);
-        check validateUnitList(envelope.'transaction.trailer);
+        check validateUnitList(envelope.'transaction.header, schema);
+        check validateUnitList(envelope.'transaction.trailer, schema);
     }
 }
 
-isolated function validateUnitList(EdiUnitSchema[] units) returns Error? {
+isolated function validateUnitList(EdiUnitSchema[] units, EdiSchema schema) returns Error? {
     foreach EdiUnitSchema unit in units {
         if unit is EdiSegSchema {
-            check validateSegmentValueConstraints(unit);
+            check validateSegmentValueConstraints(unit, schema);
         } else if unit is EdiSegGroupSchema {
-            check validateUnitList(unit.segments);
+            check validateUnitList(unit.segments, schema);
         }
         // Segment references are resolved during denormalization before this validation runs.
     }
     check lintSameCodeSiblings(units);
 }
 
-isolated function validateSegmentValueConstraints(EdiSegSchema segSchema) returns Error? {
+isolated function validateSegmentValueConstraints(EdiSegSchema segSchema, EdiSchema schema) returns Error? {
     foreach EdiFieldSchema fieldSchema in segSchema.fields {
         boolean composite = fieldSchema.components.length() > 0;
         // The value of a composite field is a component group; only its simple leaves hold values
@@ -223,9 +223,22 @@ isolated function validateSegmentValueConstraints(EdiSegSchema segSchema) return
                     segSchema.tag, componentSchema.tag, "component with subcomponents", "subcomponent");
             check validateNodeConstraints(componentSchema.values, componentSchema.discriminator,
                     segSchema.tag, componentSchema.tag);
+            // Repetitions of a field are position-insignificant, so nothing inside a repeating
+            // field can identify a definition. Rejecting here prevents a discriminator that the
+            // matcher would silently ignore.
+            check rejectDiscriminatorInRepeat(fieldSchema.repeat, componentSchema.discriminator,
+                    segSchema.tag, fieldSchema.tag, componentSchema.tag);
             foreach EdiSubcomponentSchema subcomponentSchema in componentSchema.subcomponents {
                 check validateNodeConstraints(subcomponentSchema.values, subcomponentSchema.discriminator,
                         segSchema.tag, subcomponentSchema.tag);
+                check rejectDiscriminatorInRepeat(fieldSchema.repeat, subcomponentSchema.discriminator,
+                        segSchema.tag, fieldSchema.tag, subcomponentSchema.tag);
+                // A sub-component can only be isolated when the schema declares a sub-component
+                // delimiter; without one the whole component text would decide the identity.
+                if subcomponentSchema.discriminator is string[] && schema.delimiters.subcomponent == "NOT_USED" {
+                    return error Error(string `A sub-component discriminator requires "delimiters.subcomponent" to be configured.
+                        Segment: ${segSchema.tag}, Sub-component: ${subcomponentSchema.tag}`);
+                }
             }
         }
     }
@@ -245,6 +258,14 @@ isolated function rejectConstraintsOnGroup(boolean isGroup, string[]? values, st
     if discriminator !is () {
         return error Error(string `"discriminator" on a ${nodeKind} must be declared on the ${childKind} holding the value.
             Segment: ${segTag}, Element: ${nodeTag}`);
+    }
+}
+
+isolated function rejectDiscriminatorInRepeat(boolean repeating, string[]? discriminator, string segTag,
+        string fieldTag, string nodeTag) returns Error? {
+    if repeating && discriminator is string[] {
+        return error Error(string `Discriminators are not supported inside repeating fields.
+            Segment: ${segTag}, Field: ${fieldTag}, Element: ${nodeTag}`);
     }
 }
 

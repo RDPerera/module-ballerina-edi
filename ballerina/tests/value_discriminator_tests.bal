@@ -388,3 +388,72 @@ function testValuesOnComponentWithSubcomponentsIsRejectedAtLoadTime() returns er
     test:assertTrue(schema is error,
         "values on a component with subcomponents must be rejected: the writer can never validate it");
 }
+
+@test:Config
+function testDiscriminatorInsideRepeatingFieldIsRejectedAtLoadTime() returns error? {
+    // Repetitions of a field are position-insignificant, so nothing inside a repeating field
+    // can identify a definition. Without this rule the matcher silently ignored such a
+    // discriminator and bound the segment to the wrong definition.
+    json schemaJson = {
+        "name": "RepeatingCompositeDiscriminator",
+        "delimiters": {"segment": "~", "field": "*", "component": ":", "repetition": "^"},
+        "segments": [
+            {"code": "SEG", "tag": "A", "fields": [
+                {"tag": "code"},
+                {"tag": "c", "repeat": true, "dataType": "composite", "components": [
+                    {"tag": "q", "discriminator": ["AA"]}, {"tag": "v"}]}
+            ]}
+        ]
+    };
+    EdiSchema|error schema = getSchema(schemaJson);
+    test:assertTrue(schema is error,
+        "A discriminator inside a repeating field must be rejected at schema load time");
+}
+
+@test:Config
+function testSubcomponentDiscriminatorWithoutDelimiterIsRejectedAtLoadTime() returns error? {
+    // Without a sub-component delimiter the whole component text would decide the identity.
+    json schemaJson = {
+        "name": "SubcomponentWithoutDelimiter",
+        "delimiters": {"segment": "~", "field": "*", "component": ":"},
+        "segments": [
+            {"code": "SEG", "tag": "S", "fields": [
+                {"tag": "code"},
+                {"tag": "comp", "dataType": "composite", "components": [
+                    {"tag": "inner", "subcomponents": [
+                        {"tag": "kind", "discriminator": ["A"]}, {"tag": "val"}]}]}
+            ]}
+        ]
+    };
+    EdiSchema|error schema = getSchema(schemaJson);
+    test:assertTrue(schema is error,
+        "A sub-component discriminator without a sub-component delimiter must be rejected");
+}
+
+@test:Config
+function testSubcomponentDiscriminatorWithDelimiterIsAccepted() returns error? {
+    json schemaJson = {
+        "name": "SubcomponentWithDelimiter",
+        "delimiters": {"segment": "~", "field": "*", "component": ":", "subcomponent": "^"},
+        "preserveEmptyFields": false,
+        "segments": [
+            {"code": "SEG", "tag": "TypeA", "minOccurances": 0, "fields": [
+                {"tag": "code"},
+                {"tag": "comp", "dataType": "composite", "components": [
+                    {"tag": "inner", "subcomponents": [
+                        {"tag": "kind", "discriminator": ["A"]}, {"tag": "val"}]}]}
+            ]},
+            {"code": "SEG", "tag": "TypeB", "minOccurances": 0, "fields": [
+                {"tag": "code"},
+                {"tag": "comp", "dataType": "composite", "components": [
+                    {"tag": "inner", "subcomponents": [
+                        {"tag": "kind", "discriminator": ["B"]}, {"tag": "val"}]}]}
+            ]}
+        ]
+    };
+    EdiSchema schema = check getSchema(schemaJson);
+    json result = check fromEdiString("SEG*B^42~", schema);
+    map<json> resultMap = check result.cloneWithType();
+    test:assertFalse(resultMap.hasKey("TypeA"), "A sub-component discriminator must route by its own value");
+    test:assertEquals(check result.TypeB.comp.inner.kind, "B");
+}
