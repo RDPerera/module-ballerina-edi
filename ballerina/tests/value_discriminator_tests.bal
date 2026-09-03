@@ -457,3 +457,39 @@ function testSubcomponentDiscriminatorWithDelimiterIsAccepted() returns error? {
     test:assertFalse(resultMap.hasKey("TypeA"), "A sub-component discriminator must route by its own value");
     test:assertEquals(check result.TypeB.comp.inner.kind, "B");
 }
+
+@test:Config
+function testUnmatchedSameCodeSegmentStaysAvailableToLaterUnits() returns error? {
+    // A same-code segment that matches no member of a run must stay unconsumed: the schema
+    // cursor moves past the run, the input cursor does not advance, and a later unit may take
+    // the segment. If nothing takes it, the unmatched-segment check reports it.
+    json schemaJson = {
+        "name": "CursorOwnership",
+        "delimiters": {"segment": "~", "field": "*", "component": ":"},
+        "preserveEmptyFields": false,
+        "segments": [
+            {"code": "REF", "tag": "R1", "minOccurances": 0, "fields": [
+                {"tag": "code"}, {"tag": "q", "discriminator": ["A"]}, {"tag": "v"}]},
+            {"code": "REF", "tag": "R2", "minOccurances": 0, "fields": [
+                {"tag": "code"}, {"tag": "q", "discriminator": ["B"]}, {"tag": "v"}]},
+            {"code": "DTM", "tag": "D", "minOccurances": 0, "fields": [
+                {"tag": "code"}, {"tag": "d"}]},
+            {"code": "REF", "tag": "R3", "minOccurances": 0, "fields": [
+                {"tag": "code"}, {"tag": "q", "discriminator": ["C"]}, {"tag": "v"}]}
+        ]
+    };
+    EdiSchema schema = check getSchema(schemaJson);
+
+    // The run rejects C; the later unit must receive the segment.
+    json fellThrough = check fromEdiString("REF*C*3~", schema);
+    test:assertEquals(check fellThrough.R3.v, "3", "an unmatched same-code segment must reach later units");
+
+    // The same, after the run has consumed one of its own occurrences.
+    json afterRun = check fromEdiString("REF*A*1~\nREF*C*3~", schema);
+    test:assertEquals(check afterRun.R1.v, "1");
+    test:assertEquals(check afterRun.R3.v, "3");
+
+    // Matching nothing anywhere is reported, never dropped.
+    test:assertTrue(fromEdiString("REF*Z*9~", schema) is Error,
+        "a segment no unit accepts must be reported, not silently dropped");
+}
