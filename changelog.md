@@ -6,11 +6,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-## [1.6.0] - 2026-08-03
-
 ### Added
 - [Match consecutive same-code sibling definitions that all declare discriminators as an unordered set, so discriminated segments may arrive in any order and interleave (e.g. HIPAA "any order" sub-loops, EANCOM interleaved `ALC` occurrences)](https://github.com/wso2/product-integrator/issues/2150)
 - [Add `values` and `discriminator` attributes to fields, components, and sub-components, enabling qualifier-based discrimination of segment definitions sharing a segment code (e.g. X12 834 `REF` definitions, EDIFACT `RFF`/`C506`). `values` lists the element's legal codes and is validated when writing; `discriminator` lists the codes that identify a definition and drives segment matching](https://github.com/wso2/product-integrator/issues/2150)
+
+### Fixed
+
+## [1.6.0] - 2026-08-03
+
+### Added
 
 ### Fixed
 
