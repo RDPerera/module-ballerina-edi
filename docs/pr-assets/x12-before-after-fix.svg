@@ -1,0 +1,72 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 760 404" width="760" height="404" role="img" aria-label="With REF*1L absent, edi 1.6.0 assigned REF*17 to MemberPolicyNumber and shifted every later segment; edi 1.7.0 leaves MemberPolicyNumber absent and routes 17 and DX to MemberSupplementalIdentifier">
+  <defs>
+    <marker id="aOk" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" fill="#0E6E6E"/></marker>
+    <marker id="aBad" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" fill="#B4232A"/></marker>
+  </defs>
+  <rect x="1" y="1" width="758" height="402" rx="12" fill="#FFFFFF" stroke="#C9D4DC"/>
+
+  <text x="24" y="34" font-family="-apple-system,'Segoe UI',Helvetica,Arial,sans-serif" font-size="15" font-weight="700" fill="#1F2933">The same file, with the optional REF*1L simply not present</text>
+
+  <rect x="24" y="48" width="712" height="38" rx="8" fill="#F4F6F8" stroke="#C9D4DC"/>
+  <text x="40" y="72" font-family="Menlo,Consolas,'DejaVu Sans Mono',monospace" font-size="12.5" fill="#1F2933">REF*<tspan font-weight="700" fill="#0A5A5A">0F</tspan>*110011113~    REF*<tspan font-weight="700" fill="#0A5A5A">17</tspan>*Bargained~    REF*<tspan font-weight="700" fill="#0A5A5A">DX</tspan>*1018~</text>
+  <text x="600" y="72" font-family="-apple-system,'Segoe UI',Helvetica,Arial,sans-serif" font-size="11.5" fill="#5C6B79">no 1L segment anywhere</text>
+
+  <!-- BEFORE -->
+  <rect x="24" y="104" width="344" height="252" rx="10" fill="#FFFFFF" stroke="#E0B4B6"/>
+  <rect x="24" y="104" width="344" height="30" rx="10" fill="#FBE9E9"/>
+  <rect x="24" y="124" width="344" height="10" fill="#FBE9E9"/>
+  <text x="40" y="124" font-family="-apple-system,'Segoe UI',Helvetica,Arial,sans-serif" font-size="12.5" font-weight="700" fill="#8C1C22">BEFORE — edi 1.6.0</text>
+  <text x="352" y="124" text-anchor="end" font-family="-apple-system,'Segoe UI',Helvetica,Arial,sans-serif" font-size="11" fill="#8C1C22">matched by code + order</text>
+
+  <rect x="40" y="150" width="74" height="24" rx="4" fill="#EAEEF2" stroke="#C9D4DC"/>
+  <text x="77" y="167" text-anchor="middle" font-family="Menlo,Consolas,monospace" font-size="11.5" font-weight="700" fill="#5C6B79">REF*0F</text>
+  <line x1="118" y1="162" x2="140" y2="162" stroke="#0E6E6E" stroke-width="1.5" marker-end="url(#aOk)"/>
+  <text x="148" y="166" font-family="-apple-system,'Segoe UI',Helvetica,Arial,sans-serif" font-size="11.5" font-weight="700" fill="#1F2933">SubscriberIdentifier</text>
+
+  <rect x="40" y="188" width="74" height="24" rx="4" fill="#FBE9E9" stroke="#B4232A"/>
+  <text x="77" y="205" text-anchor="middle" font-family="Menlo,Consolas,monospace" font-size="11.5" font-weight="700" fill="#8C1C22">REF*17</text>
+  <line x1="118" y1="200" x2="140" y2="200" stroke="#B4232A" stroke-width="1.5" marker-end="url(#aBad)"/>
+  <text x="148" y="204" font-family="-apple-system,'Segoe UI',Helvetica,Arial,sans-serif" font-size="11.5" font-weight="700" fill="#8C1C22">MemberPolicyNumber</text>
+  <text x="148" y="219" font-family="-apple-system,'Segoe UI',Helvetica,Arial,sans-serif" font-size="10.5" fill="#B4232A">wrong — 17 is not a policy number</text>
+
+  <rect x="40" y="238" width="74" height="24" rx="4" fill="#EAEEF2" stroke="#C9D4DC"/>
+  <text x="77" y="255" text-anchor="middle" font-family="Menlo,Consolas,monospace" font-size="11.5" font-weight="700" fill="#5C6B79">REF*DX</text>
+  <line x1="118" y1="250" x2="140" y2="250" stroke="#B4232A" stroke-width="1.5" marker-end="url(#aBad)"/>
+  <text x="148" y="254" font-family="-apple-system,'Segoe UI',Helvetica,Arial,sans-serif" font-size="11.5" font-weight="700" fill="#8C1C22">MemberSupplemental[0]</text>
+  <text x="148" y="269" font-family="-apple-system,'Segoe UI',Helvetica,Arial,sans-serif" font-size="10.5" fill="#B4232A">shifted — everything after slides up one</text>
+
+  <rect x="40" y="292" width="312" height="46" rx="6" fill="#FBE9E9" stroke="#E0B4B6"/>
+  <text x="196" y="311" text-anchor="middle" font-family="-apple-system,'Segoe UI',Helvetica,Arial,sans-serif" font-size="11.5" font-weight="700" fill="#8C1C22">no error raised</text>
+  <text x="196" y="328" text-anchor="middle" font-family="-apple-system,'Segoe UI',Helvetica,Arial,sans-serif" font-size="11" fill="#8C1C22">the result just looks plausible and is wrong</text>
+
+  <!-- AFTER -->
+  <rect x="392" y="104" width="344" height="252" rx="10" fill="#FFFFFF" stroke="#9CC6C2"/>
+  <rect x="392" y="104" width="344" height="30" rx="10" fill="#DCEBE9"/>
+  <rect x="392" y="124" width="344" height="10" fill="#DCEBE9"/>
+  <text x="408" y="124" font-family="-apple-system,'Segoe UI',Helvetica,Arial,sans-serif" font-size="12.5" font-weight="700" fill="#0A5A5A">AFTER — edi 1.7.0</text>
+  <text x="720" y="124" text-anchor="end" font-family="-apple-system,'Segoe UI',Helvetica,Arial,sans-serif" font-size="11" fill="#0A5A5A">matched by qualifier</text>
+
+  <rect x="408" y="150" width="74" height="24" rx="4" fill="#DCEBE9" stroke="#0E6E6E"/>
+  <text x="445" y="167" text-anchor="middle" font-family="Menlo,Consolas,monospace" font-size="11.5" font-weight="700" fill="#0A5A5A">REF*0F</text>
+  <line x1="486" y1="162" x2="508" y2="162" stroke="#0E6E6E" stroke-width="1.5" marker-end="url(#aOk)"/>
+  <text x="516" y="166" font-family="-apple-system,'Segoe UI',Helvetica,Arial,sans-serif" font-size="11.5" font-weight="700" fill="#1F2933">SubscriberIdentifier</text>
+
+  <rect x="408" y="188" width="74" height="24" rx="4" fill="#F4F6F8" stroke="#C9D4DC" stroke-dasharray="3 3"/>
+  <text x="445" y="205" text-anchor="middle" font-family="Menlo,Consolas,monospace" font-size="11.5" fill="#8A99A8">— none —</text>
+  <line x1="486" y1="200" x2="508" y2="200" stroke="#8A99A8" stroke-width="1.5" stroke-dasharray="3 3"/>
+  <text x="516" y="204" font-family="-apple-system,'Segoe UI',Helvetica,Arial,sans-serif" font-size="11.5" font-weight="700" fill="#5C6B79">MemberPolicyNumber</text>
+  <text x="516" y="219" font-family="-apple-system,'Segoe UI',Helvetica,Arial,sans-serif" font-size="10.5" fill="#0A5A5A">left absent — nothing carried 1L</text>
+
+  <rect x="408" y="238" width="74" height="24" rx="4" fill="#DCEBE9" stroke="#0E6E6E"/>
+  <text x="445" y="255" text-anchor="middle" font-family="Menlo,Consolas,monospace" font-size="11.5" font-weight="700" fill="#0A5A5A">REF*17</text>
+  <line x1="486" y1="250" x2="508" y2="250" stroke="#0E6E6E" stroke-width="1.5" marker-end="url(#aOk)"/>
+  <text x="516" y="254" font-family="-apple-system,'Segoe UI',Helvetica,Arial,sans-serif" font-size="11.5" font-weight="700" fill="#1F2933">MemberSupplemental[0]</text>
+
+  <rect x="408" y="272" width="74" height="24" rx="4" fill="#DCEBE9" stroke="#0E6E6E"/>
+  <text x="445" y="289" text-anchor="middle" font-family="Menlo,Consolas,monospace" font-size="11.5" font-weight="700" fill="#0A5A5A">REF*DX</text>
+  <line x1="486" y1="284" x2="508" y2="284" stroke="#0E6E6E" stroke-width="1.5" marker-end="url(#aOk)"/>
+  <text x="516" y="288" font-family="-apple-system,'Segoe UI',Helvetica,Arial,sans-serif" font-size="11.5" font-weight="700" fill="#1F2933">MemberSupplemental[1]</text>
+
+  <rect x="408" y="310" width="312" height="30" rx="6" fill="#DCEBE9" stroke="#9CC6C2"/>
+  <text x="564" y="329" text-anchor="middle" font-family="-apple-system,'Segoe UI',Helvetica,Arial,sans-serif" font-size="11.5" font-weight="700" fill="#0A5A5A">each segment lands where its qualifier says</text>
+</svg>
