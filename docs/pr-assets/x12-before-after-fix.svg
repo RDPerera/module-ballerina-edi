@@ -8,7 +8,7 @@
   <text x="24" y="34" font-family="-apple-system,'Segoe UI',Helvetica,Arial,sans-serif" font-size="15" font-weight="700" fill="#1F2933">The same file, with the optional REF*1L simply not present</text>
 
   <rect x="24" y="48" width="712" height="38" rx="8" fill="#F4F6F8" stroke="#C9D4DC"/>
-  <text x="40" y="72" font-family="Menlo,Consolas,'DejaVu Sans Mono',monospace" font-size="12.5" fill="#1F2933">REF*<tspan font-weight="700" fill="#0A5A5A">0F</tspan>*110011113~    REF*<tspan font-weight="700" fill="#0A5A5A">17</tspan>*Bargained~    REF*<tspan font-weight="700" fill="#0A5A5A">DX</tspan>*1018~</text>
+  <text x="40" y="72" font-family="Menlo,Consolas,'DejaVu Sans Mono',monospace" font-size="12.5" fill="#1F2933">REF*<tspan font-weight="700" fill="#0A5A5A">0F</tspan>*SUB0001~    REF*<tspan font-weight="700" fill="#0A5A5A">17</tspan>*Twintowers~    REF*<tspan font-weight="700" fill="#0A5A5A">DX</tspan>*DX7788~</text>
   <text x="600" y="72" font-family="-apple-system,'Segoe UI',Helvetica,Arial,sans-serif" font-size="11.5" fill="#5C6B79">no 1L segment anywhere</text>
 
   <!-- BEFORE -->

@@ -16,7 +16,7 @@
   <rect x="84" y="72" width="36" height="28" rx="4" fill="#DCEBE9" stroke="#0E6E6E"/>
   <text x="102" y="91" text-anchor="middle" font-family="Menlo,Consolas,'DejaVu Sans Mono',monospace" font-size="13" font-weight="700" fill="#0A5A5A">0F</text>
   <text x="125" y="91" font-family="Menlo,Consolas,monospace" font-size="13" fill="#8A99A8">*</text>
-  <text x="138" y="91" font-family="Menlo,Consolas,'DejaVu Sans Mono',monospace" font-size="13" fill="#1F2933">110011113~</text>
+  <text x="138" y="91" font-family="Menlo,Consolas,'DejaVu Sans Mono',monospace" font-size="13" fill="#1F2933">SUB0001~</text>
 
   <!-- row 2 -->
   <rect x="24" y="132" width="44" height="28" rx="4" fill="#EAEEF2" stroke="#C9D4DC"/>
@@ -25,7 +25,7 @@
   <rect x="84" y="132" width="36" height="28" rx="4" fill="#DCEBE9" stroke="#0E6E6E"/>
   <text x="102" y="151" text-anchor="middle" font-family="Menlo,Consolas,'DejaVu Sans Mono',monospace" font-size="13" font-weight="700" fill="#0A5A5A">1L</text>
   <text x="125" y="151" font-family="Menlo,Consolas,monospace" font-size="13" fill="#8A99A8">*</text>
-  <text x="138" y="151" font-family="Menlo,Consolas,'DejaVu Sans Mono',monospace" font-size="13" fill="#1F2933">373~</text>
+  <text x="138" y="151" font-family="Menlo,Consolas,'DejaVu Sans Mono',monospace" font-size="13" fill="#1F2933">POL0042~</text>
 
   <!-- row 3 -->
   <rect x="24" y="192" width="44" height="28" rx="4" fill="#EAEEF2" stroke="#C9D4DC"/>
@@ -34,7 +34,7 @@
   <rect x="84" y="192" width="36" height="28" rx="4" fill="#DCEBE9" stroke="#0E6E6E"/>
   <text x="102" y="211" text-anchor="middle" font-family="Menlo,Consolas,'DejaVu Sans Mono',monospace" font-size="13" font-weight="700" fill="#0A5A5A">17</text>
   <text x="125" y="211" font-family="Menlo,Consolas,monospace" font-size="13" fill="#8A99A8">*</text>
-  <text x="138" y="211" font-family="Menlo,Consolas,'DejaVu Sans Mono',monospace" font-size="13" fill="#1F2933">Bargained~</text>
+  <text x="138" y="211" font-family="Menlo,Consolas,'DejaVu Sans Mono',monospace" font-size="13" fill="#1F2933">Twintowers~</text>
 
   <!-- entry cards -->
   <rect x="420" y="68" width="316" height="42" rx="8" fill="#F4F6F8" stroke="#C9D4DC"/>
@@ -49,7 +49,7 @@
 
   <!-- arrows -->
   <line x1="266" y1="86" x2="414" y2="89" stroke="#0E6E6E" stroke-width="1.6" marker-end="url(#aT)"/>
-  <line x1="192" y1="146" x2="414" y2="149" stroke="#0E6E6E" stroke-width="1.6" marker-end="url(#aT)"/>
+  <line x1="266" y1="146" x2="414" y2="149" stroke="#0E6E6E" stroke-width="1.6" marker-end="url(#aT)"/>
   <line x1="266" y1="206" x2="414" y2="209" stroke="#0E6E6E" stroke-width="1.6" marker-end="url(#aT)"/>
 
   <text x="380" y="264" text-anchor="middle" font-family="-apple-system,'Segoe UI',Helvetica,Arial,sans-serif" font-size="13" fill="#5C6B79">the segment code is the same on every line —</text>

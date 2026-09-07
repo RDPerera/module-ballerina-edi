@@ -13,9 +13,9 @@
   <rect x="104" y="58" width="44" height="36" rx="5" fill="#DCEBE9" stroke="#0E6E6E"/>
   <text x="126" y="82" text-anchor="middle" font-family="Menlo,Consolas,'DejaVu Sans Mono',monospace" font-size="15" font-weight="700" fill="#0A5A5A">1L</text>
   <text x="156" y="82" font-family="Menlo,Consolas,monospace" font-size="15" fill="#8A99A8">*</text>
-  <rect x="172" y="58" width="56" height="36" rx="5" fill="#EAEEF2" stroke="#C9D4DC"/>
-  <text x="200" y="82" text-anchor="middle" font-family="Menlo,Consolas,'DejaVu Sans Mono',monospace" font-size="15" font-weight="700" fill="#1F2933">373</text>
-  <text x="236" y="82" font-family="Menlo,Consolas,monospace" font-size="15" fill="#8A99A8">~</text>
+  <rect x="172" y="58" width="78" height="36" rx="5" fill="#EAEEF2" stroke="#C9D4DC"/>
+  <text x="211" y="82" text-anchor="middle" font-family="Menlo,Consolas,'DejaVu Sans Mono',monospace" font-size="15" font-weight="700" fill="#1F2933">POL0042</text>
+  <text x="258" y="82" font-family="Menlo,Consolas,monospace" font-size="15" fill="#8A99A8">~</text>
 
   <line x1="51" y1="96" x2="51" y2="108" stroke="#8A99A8"/>
   <text x="51" y="124" text-anchor="middle" font-family="-apple-system,'Segoe UI',Helvetica,Arial,sans-serif" font-size="12" fill="#5C6B79">segment code</text>
